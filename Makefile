@@ -1,17 +1,29 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -std=c11
+CC = clang
+CFLAGS = -std=c11 -O3 -g -Wall -Wextra -Wpedantic -Wstrict-aliasing
+CFLAGS += -Wno-pointer-arith -Wno-newline-eof -Wno-unused-parameter -Wno-gnu-statement-expression
+CFLAGS += -Wno-gnu-compound-literal-initializer -Wno-gnu-zero-variadic-macro-arguments
+CFLAGS += -Ilib/stb
+# LDFLAGS = . -lm
 
-SRC = raytracer.c
-OBJ = $(SRC:.c=.o)
-EXECUTABLE = raytracer
+SRC  = $(wildcard src/**/*.c) $(wildcard src/*.c)
+OBJ  = $(SRC:.c=.o)
+BIN = bin
 
-all: $(EXECUTABLE)
+.PHONY: all clean
 
-$(EXECUTABLE): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+all: dirs fancytracer
+
+dirs:
+	mkdir -p ./$(BIN)
+
+run: all
+	$(BIN)/fancytracer
+
+fancytracer: $(OBJ)
+	$(CC) -o $(BIN)/fancytracer $^ $(LDFLAGS)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
-	rm -f $(EXECUTABLE) $(OBJ)
+	rm -rf $(BIN) $(OBJ)
