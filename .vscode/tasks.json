@@ -1,0 +1,26 @@
+{
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "C/C++: Makefile build",
+            "command": "/usr/bin/make",
+            "args": [
+                "debug",
+                "-f",
+                "${workspaceFolder}/Makefile"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Task generated to execute the Makefile."
+        },
+    ],
+    "version": "2.0.0"
+}

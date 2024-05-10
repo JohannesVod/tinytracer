@@ -4,7 +4,7 @@
 void write_png_file(char *filename, int width, int height) {
     unsigned char *image = (unsigned char *)malloc(width * height * 3);
     if (!image) {
-        fprintf("Error: Unable to allocate memory for image.\n");
+        printf("Error: Unable to allocate memory for image.\n");
         return;
     }
 
@@ -17,7 +17,7 @@ void write_png_file(char *filename, int width, int height) {
     }
 
     if (!stbi_write_png(filename, width, height, 3, image, width * 3)) {
-        fprintf("Error: Unable to write image to file %s.\n", filename);
+        printf("Error: Unable to write image to file %s.\n", filename);
         free(image);
         return;
     }

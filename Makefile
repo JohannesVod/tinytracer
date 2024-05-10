@@ -1,30 +1,35 @@
 CC = gcc
-CFLAGS = -std=c11 -O3 -g -Wall -Wextra -Wpedantic -Wstrict-aliasing
+CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -Wstrict-aliasing
 CFLAGS += -Wno-pointer-arith -Wno-newline-eof -Wno-unused-parameter -Wno-gnu-statement-expression
 CFLAGS += -Wno-gnu-compound-literal-initializer -Wno-gnu-zero-variadic-macro-arguments
 CFLAGS += -Ilib/stb
-
 LDFLAGS = -lm
 
 SRC  = fancytracer.c
 OBJ  = $(SRC:.c=.o)
 BIN = bin
 
-.PHONY: all clean run
+.PHONY: all clean run debug release
 
-all: dirs fancytracer
+all: release
 
 dirs:
-	mkdir -p ./$(BIN)
+	@mkdir -p ./$(BIN)
 
-run: fancytracer
-	$(BIN)/fancytracer
+run: release
+	./$(BIN)/fancytracer
 
-fancytracer: $(OBJ)
-	$(CC) -o $(BIN)/fancytracer $^ $(LDFLAGS)
+debug: CFLAGS += -g -O0
+debug: clean dirs $(BIN)/fancytracer
 
-%.o: %.c
+release: CFLAGS += -O3
+release: clean dirs $(BIN)/fancytracer
+
+$(BIN)/fancytracer: $(addprefix $(BIN)/,$(OBJ))
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(BIN)/%.o: %.c
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
-	rm -rf $(BIN) $(OBJ)
+	@rm -rf $(BIN)
