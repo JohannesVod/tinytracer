@@ -1,11 +1,10 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-
 #include "stb_image_write.h"
 
 void write_png_file(char *filename, int width, int height) {
     unsigned char *image = (unsigned char *)malloc(width * height * 3);
     if (!image) {
-        fprintf(stderr, "Error: Unable to allocate memory for image.\n");
+        fprintf("Error: Unable to allocate memory for image.\n");
         return;
     }
 
@@ -18,7 +17,7 @@ void write_png_file(char *filename, int width, int height) {
     }
 
     if (!stbi_write_png(filename, width, height, 3, image, width * 3)) {
-        fprintf(stderr, "Error: Unable to write image to file %s.\n", filename);
+        fprintf("Error: Unable to write image to file %s.\n", filename);
         free(image);
         return;
     }
@@ -30,4 +29,7 @@ int main() {
     char *filename = "output.png";
     int width = 800;
     int height = 600;
-    write_png_file(filename, width,
+    write_png_file(filename, width, height);
+    printf("Image created successfully: %s\n", filename);
+    return 0;
+}
