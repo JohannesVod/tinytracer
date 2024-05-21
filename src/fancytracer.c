@@ -3,11 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include <float.h>
-
-
-typedef struct {
-    float x, y, z;
-} Vec3;
+#include "linalg.h"
 
 typedef struct {
     Vec3 v1, v2, v3;
@@ -67,35 +63,6 @@ void free_mesh(Mesh *mesh) {
     free(mesh->triangles);
 }
 
-
-Vec3 vec3_subtract(Vec3 a, Vec3 b) {
-    Vec3 result = { a.x - b.x, a.y - b.y, a.z - b.z };
-    return result;
-}
-
-Vec3 vec3_cross(Vec3 a, Vec3 b) {
-    Vec3 result = { 
-        a.y * b.z - a.z * b.y, 
-        a.z * b.x - a.x * b.z, 
-        a.x * b.y - a.y * b.x 
-    };
-    return result;
-}
-
-float vec3_dot(Vec3 a, Vec3 b) {
-    return a.x * b.x + a.y * b.y + a.z * b.z;
-}
-
-Vec3 vec3_scale(Vec3 a, float t) {
-    Vec3 result = { a.x * t, a.y * t, a.z * t };
-    return result;
-}
-
-Vec3 vec3_add(Vec3 a, Vec3 b) {
-    Vec3 result = { a.x + b.x, a.y + b.y, a.z + b.z };
-    return result;
-}
-
 int ray_intersects_triangle(Vec3 ray_origin, 
                              Vec3 ray_vector, 
                              const Triangle *triangle,
@@ -135,7 +102,6 @@ int ray_intersects_triangle(Vec3 ray_origin,
     else // This means that there is a line intersection but not a ray intersection.
         return 0;
 }
-
 
 int main() {
     Mesh mesh = {0};
