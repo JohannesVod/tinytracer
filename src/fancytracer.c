@@ -136,9 +136,6 @@ int ray_intersects_triangle(Vec3 ray_origin,
         return 0;
 }
 
-Vec3 screen2Camera(Vec3 camera_pos, ){
-    
-}
 
 int main() {
     Mesh mesh = {0};

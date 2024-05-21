@@ -1,3 +1,5 @@
+UNAME_S = $(shell uname -s)
+
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -Wstrict-aliasing
 CFLAGS += -Wno-pointer-arith -Wno-newline-eof -Wno-unused-parameter -Wno-gnu-statement-expression
@@ -16,20 +18,20 @@ all: release
 dirs:
 	@mkdir -p ./$(BIN)
 
-run: release
-	./$(BIN)/fancytracer
+run: all
+	$(BIN)/fancytracer
 
 debug: CFLAGS += -g -O0
-debug: clean dirs $(BIN)/fancytracer
+debug: clean dirs $(BIN)
 
 release: CFLAGS += -O3
-release: clean dirs $(BIN)/fancytracer
+release: clean dirs $(BIN)
 
-$(BIN)/fancytracer: $(addprefix $(BIN)/,$(OBJ))
-	$(CC) -o $@ $^ $(LDFLAGS)
+fancytracer: $(OBJ)
+	$(CC) -o $(BIN)/fancytracer $^ $(LDFLAGS)
 
-$(BIN)/%.o: %.c
+%.o: %.c
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:
-	@rm -rf $(BIN)
+	rm -rf $(BIN) $(OBJ)
