@@ -15,6 +15,13 @@ typedef struct {
     size_t triangle_count;
 } Mesh;
 
+typedef struct {
+    Vec3 position, rotation;
+    int height;
+    int width;
+    float focal_length;
+} Camera;
+
 void read_obj_file(const char *filename, Mesh *mesh);
 void free_mesh(Mesh *mesh);
 int ray_intersects_triangle(Vec3 ray_origin, 

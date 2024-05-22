@@ -7,13 +7,13 @@ CFLAGS += -Wno-gnu-compound-literal-initializer -Wno-gnu-zero-variadic-macro-arg
 CFLAGS += -Ilib/stb
 LDFLAGS = -lm
 
-SRC  = $(wildcard src/**/*.c) $(wildcard src/*.c) $(wildcard src/**/**/*.c) $(wildcard src/**/**/**/*.c)
-OBJ  = $(SRC:.c=.o)
 BIN = bin
+SRC = $(wildcard src/**/*.c) $(wildcard src/*.c) $(wildcard src/**/**/*.c) $(wildcard src/**/**/**/*.c)
+OBJ = $(subst src, $(BIN), $(SRC:.c=.o))
 
-.PHONY: all clean
+.PHONY: all clean debug release
 
-all: dirs fancytracer
+all: release
 
 dirs:
 	mkdir -p ./$(BIN)
@@ -21,10 +21,17 @@ dirs:
 run: all
 	$(BIN)/fancytracer
 
+debug: CFLAGS += -g -O0
+debug: clean dirs fancytracer
+
+release: CFLAGS += -O3
+release: clean dirs fancytracer
+
 fancytracer: $(OBJ)
 	$(CC) -o $(BIN)/fancytracer $^ $(LDFLAGS)
 
-%.o: %.c
+$(BIN)/%.o: src/%.c
+	mkdir -p $(dir $@)
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 clean:

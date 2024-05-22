@@ -44,7 +44,6 @@ void read_obj_file(const char *filename, Mesh *mesh) {
             mesh->triangles[mesh->triangle_count++] = t;
         }
     }
-
     fclose(file);
 }
 
@@ -66,7 +65,7 @@ int ray_intersects_triangle(Vec3 ray_origin,
     float det = vec3_dot(edge1, ray_cross_e2);
 
     if (det > -epsilon && det < epsilon)
-        return 0;    // This ray is parallel to this triangle.
+        return 0;
 
     float inv_det = 1.0f / det;
     Vec3 s = vec3_subtract(ray_origin, triangle->v1);
@@ -81,14 +80,26 @@ int ray_intersects_triangle(Vec3 ray_origin,
     if (v < 0.0f || u + v > 1.0f)
         return 0;
 
-    // At this stage we can compute t to find out where the intersection point is on the line.
     float t = inv_det * vec3_dot(edge2, s_cross_e1);
 
-    if (t > epsilon) // ray intersection
+    if (t > epsilon)
     {
         *out_intersection_point = vec3_add(ray_origin, vec3_scale(ray_vector, t));
         return 1;
     }
-    else // This means that there is a line intersection but not a ray intersection.
+    else
         return 0;
+}
+
+Vec3 screen2CameraDir(Camera cam, int screenPos_x, int screenPos_y){
+    Vec3 cam_coor = {
+        (float)screenPos_x/(float)cam.height,
+        (float)screenPos_y/(float)cam.height,
+        0
+    };
+    return cam_coor;
+    // Vec3 center_shift = {
+    //     -0.5, -((float)cam.width/(float)cam.height)*0.5, 0
+    // };
+    // Vec3 shifted = vec3_add(cam_coor, center_shift);
 }
