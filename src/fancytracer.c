@@ -8,7 +8,7 @@ void render_scene(char *filename, int width, int height, char *objfile) {
     // load mesh
     Mesh mesh = {0};
     read_obj_file(objfile, &mesh);
-    Vec3 cam_pos = {0, 0, 15};
+    Vec3 cam_pos = {0, 0, 5};
     Vec3 cam_rot = {0, 0, 0};
     float focal_length = 1;
     Camera cam = {cam_pos, cam_rot, width, height, focal_length};
@@ -21,7 +21,6 @@ void render_scene(char *filename, int width, int height, char *objfile) {
         printf("  v2: (%f, %f, %f)\n", t.v2.x, t.v2.y, t.v2.z);
         printf("  v3: (%f, %f, %f)\n", t.v3.x, t.v3.y, t.v3.z);
     }
-    free_mesh(&mesh);
 
     unsigned char *image = (unsigned char *)malloc(width * height * 3);
     if (!image) {
@@ -48,14 +47,15 @@ void render_scene(char *filename, int width, int height, char *objfile) {
         free(image);
         return;
     }
+    free_mesh(&mesh);
     free(image);
 }
 
 int main() {
     char *filename = "output.png";
     int width = 800;
-    int height = 600;
-    render_scene(filename, width, height, "pyramid.obj");
+    int height = 400;
+    render_scene(filename, width, height, "baseScene.obj");
     printf("Image created successfully: %s\n", filename);
     return 0;
 }

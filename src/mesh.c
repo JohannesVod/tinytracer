@@ -105,7 +105,7 @@ Vec3 screen2CameraDir(Camera cam, int screenPos_x, int screenPos_y){
         0
     };
     Vec3 center_shift = {
-        -0.5, -((float)cam.width/(float)cam.height)*0.5, -cam.focal_length
+        -((float)cam.width/(float)cam.height)*0.5, -0.5, -cam.focal_length
     };
     Vec3 res = vec3_add(cam_coor, center_shift);
     return res;
