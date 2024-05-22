@@ -1,10 +1,17 @@
-// main.c
 #include <stdio.h>
 #include "mesh.h"
 
-int main() {
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
+void render_scene(char *filename, int width, int height, char *objfile) {
+    // load mesh
     Mesh mesh = {0};
-    read_obj_file("pyramid.obj", &mesh);
+    read_obj_file(objfile, &mesh);
+    Vec3 cam_pos = {0, 0, 15};
+    Vec3 cam_rot = {0, 0, 0};
+    float focal_length = 1;
+    Camera cam = {cam_pos, cam_rot, width, height, focal_length};
 
     // Example usage: Print triangles
     for (size_t i = 0; i < mesh.triangle_count; ++i) {
@@ -15,5 +22,40 @@ int main() {
         printf("  v3: (%f, %f, %f)\n", t.v3.x, t.v3.y, t.v3.z);
     }
     free_mesh(&mesh);
+
+    unsigned char *image = (unsigned char *)malloc(width * height * 3);
+    if (!image) {
+        printf("Error: Unable to allocate memory for image.\n");
+        return;
+    }
+
+    Vec3 intersect_point = {0, 0, 0};
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Vec3 cam_ray = screen2CameraDir(cam, x, y);
+            int color = 255;
+            if (ray_intersects_mesh(cam.position, cam_ray, &mesh, &intersect_point)){
+                color = 0;
+            }
+            image[(y * width + x) * 3] = (unsigned char)(color);                  // Blue
+            image[(y * width + x) * 3 + 1] = (unsigned char)(color);              // Green
+            image[(y * width + x) * 3 + 2] = (unsigned char)(color);              // Red
+        }
+    }
+
+    if (!stbi_write_png(filename, width, height, 3, image, width * 3)) {
+        printf("Error: Unable to write image to file %s.\n", filename);
+        free(image);
+        return;
+    }
+    free(image);
+}
+
+int main() {
+    char *filename = "output.png";
+    int width = 800;
+    int height = 600;
+    render_scene(filename, width, height, "pyramid.obj");
+    printf("Image created successfully: %s\n", filename);
     return 0;
 }

@@ -52,10 +52,7 @@ void free_mesh(Mesh *mesh) {
     free(mesh->triangles);
 }
 
-int ray_intersects_triangle(Vec3 ray_origin, 
-                             Vec3 ray_vector, 
-                             const Triangle *triangle,
-                             Vec3 *out_intersection_point) 
+int ray_intersects_triangle(Vec3 ray_origin, Vec3 ray_vector, const Triangle *triangle, Vec3 *out_intersection_point) 
 {
     const float epsilon = FLT_EPSILON;
 
@@ -91,15 +88,25 @@ int ray_intersects_triangle(Vec3 ray_origin,
         return 0;
 }
 
+int ray_intersects_mesh(Vec3 ray_origin, Vec3 ray_vector, const Mesh *mesh, Vec3 *out_intersection_point){
+    for (size_t i = 0; i < mesh->triangle_count; i++)
+    {
+        if (ray_intersects_triangle(ray_origin, ray_vector, &mesh->triangles[i], out_intersection_point)){
+            return 1;
+        }
+    }
+    return 0;
+}
+
 Vec3 screen2CameraDir(Camera cam, int screenPos_x, int screenPos_y){
     Vec3 cam_coor = {
         (float)screenPos_x/(float)cam.height,
         (float)screenPos_y/(float)cam.height,
         0
     };
-    return cam_coor;
-    // Vec3 center_shift = {
-    //     -0.5, -((float)cam.width/(float)cam.height)*0.5, 0
-    // };
-    // Vec3 shifted = vec3_add(cam_coor, center_shift);
+    Vec3 center_shift = {
+        -0.5, -((float)cam.width/(float)cam.height)*0.5, -cam.focal_length
+    };
+    Vec3 res = vec3_add(cam_coor, center_shift);
+    return res;
 }
