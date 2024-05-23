@@ -54,38 +54,7 @@ void free_mesh(Mesh *mesh) {
 
 int ray_intersects_triangle(Vec3 ray_origin, Vec3 ray_vector, const Triangle *triangle, Vec3 *out_intersection_point) 
 {
-    const float epsilon = FLT_EPSILON;
-
-    Vec3 edge1 = vec3_subtract(triangle->v2, triangle->v1);
-    Vec3 edge2 = vec3_subtract(triangle->v3, triangle->v1);
-    Vec3 ray_cross_e2 = vec3_cross(ray_vector, edge2);
-    float det = vec3_dot(edge1, ray_cross_e2);
-
-    if (det > -epsilon && det < epsilon)
-        return 0;
-
-    float inv_det = 1.0f / det;
-    Vec3 s = vec3_subtract(ray_origin, triangle->v1);
-    float u = inv_det * vec3_dot(s, ray_cross_e2);
-
-    if (u < 0.0f || u > 1.0f)
-        return 0;
-
-    Vec3 s_cross_e1 = vec3_cross(s, edge1);
-    float v = inv_det * vec3_dot(ray_vector, s_cross_e1);
-
-    if (v < 0.0f || u + v > 1.0f)
-        return 0;
-
-    float t = inv_det * vec3_dot(edge2, s_cross_e1);
-
-    if (t > epsilon)
-    {
-        *out_intersection_point = vec3_add(ray_origin, vec3_scale(ray_vector, t));
-        return 1;
-    }
-    else
-        return 0;
+    
 }
 
 int ray_intersects_mesh(Vec3 ray_origin, Vec3 ray_vector, const Mesh *mesh, Vec3 *out_intersection_point){

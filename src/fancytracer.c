@@ -1,10 +1,15 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include "mesh.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
 void render_scene(char *filename, int width, int height, char *objfile) {
+    // Measure total execution time
+    clock_t total_start = clock();
+
     // load mesh
     Mesh mesh = {0};
     read_obj_file(objfile, &mesh);
@@ -29,13 +34,23 @@ void render_scene(char *filename, int width, int height, char *objfile) {
     }
 
     Vec3 intersect_point = {0, 0, 0};
+
+    // Measure time spent in ray_intersects_mesh
+    clock_t ray_intersect_start, ray_intersect_end;
+    double ray_intersect_time = 0.0;
+
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
+            ray_intersect_start = clock();
             Vec3 cam_ray = screen2CameraDir(cam, x, y);
+            ray_intersect_end = clock();
+            ray_intersect_time += (double)(ray_intersect_end - ray_intersect_start) / CLOCKS_PER_SEC;
             int color = 255;
-            if (ray_intersects_mesh(cam.position, cam_ray, &mesh, &intersect_point)){
+
+            if (ray_intersects_mesh(cam.position, cam_ray, &mesh, &intersect_point)) {
                 color = 0;
             }
+
             image[(y * width + x) * 3] = (unsigned char)(color);                  // Blue
             image[(y * width + x) * 3 + 1] = (unsigned char)(color);              // Green
             image[(y * width + x) * 3 + 2] = (unsigned char)(color);              // Red
@@ -49,6 +64,12 @@ void render_scene(char *filename, int width, int height, char *objfile) {
     }
     free_mesh(&mesh);
     free(image);
+
+    clock_t total_end = clock();
+    double total_time = (double)(total_end - total_start) / CLOCKS_PER_SEC;
+
+    printf("Total execution time: %f seconds\n", total_time);
+    printf("Time spent in ray_intersects_mesh: %f seconds\n", ray_intersect_time);
 }
 
 int main() {
