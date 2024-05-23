@@ -14,13 +14,13 @@ void render_scene(char *filename, int width, int height, char *objfile) {
     Camera cam = {cam_pos, cam_rot, width, height, focal_length};
 
     // Example usage: Print triangles
-    for (size_t i = 0; i < mesh.triangle_count; ++i) {
-        Triangle t = mesh.triangles[i];
-        printf("Triangle %zu:\n", i + 1);
-        printf("  v1: (%f, %f, %f)\n", t.v1.x, t.v1.y, t.v1.z);
-        printf("  v2: (%f, %f, %f)\n", t.v2.x, t.v2.y, t.v2.z);
-        printf("  v3: (%f, %f, %f)\n", t.v3.x, t.v3.y, t.v3.z);
-    }
+    // for (size_t i = 0; i < mesh.triangle_count; ++i) {
+    //     Triangle t = mesh.triangles[i];
+    //     printf("Triangle %zu:\n", i + 1);
+    //     printf("  v1: (%f, %f, %f)\n", t.v1.x, t.v1.y, t.v1.z);
+    //     printf("  v2: (%f, %f, %f)\n", t.v2.x, t.v2.y, t.v2.z);
+    //     printf("  v3: (%f, %f, %f)\n", t.v3.x, t.v3.y, t.v3.z);
+    // }
 
     unsigned char *image = (unsigned char *)malloc(width * height * 3);
     if (!image) {
