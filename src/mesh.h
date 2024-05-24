@@ -24,11 +24,8 @@ typedef struct {
 
 void read_obj_file(const char *filename, Mesh *mesh);
 void free_mesh(Mesh *mesh);
-int ray_intersects_triangle(Vec3 ray_origin, 
-                             Vec3 ray_vector, 
-                             const Triangle *triangle,
-                             Vec3 *out_intersection_point);
-int ray_intersects_mesh(Vec3 ray_origin, Vec3 ray_vector, const Mesh *mesh, Vec3 *out_intersection_point);
-Vec3 screen2CameraDir(Camera cam, int screenPos_x, int screenPos_y);
+int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out); 
+int ray_intersects_mesh(Ray *ray, const Mesh *mesh, Vec3 *out);
+int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result);
 
 #endif // MESH_H

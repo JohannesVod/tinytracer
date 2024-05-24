@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <float.h>
 #include "mesh.h"
 #include "linalg.h"
@@ -64,7 +65,7 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out)
     Vec3 e2; vec3_subtract(&triangle->v3, &triangle->v1, &e2);
     Vec3 e1_cross_e2; vec3_cross(&e1, &e2, out);
     float det = vec3_dot(&ray->direction, &e1_cross_e2);
-    if (abs(det) <= 1e-6){
+    if (fabs(det) <= 1e-6){
         return 0; // no solution because ray is parallel to triangle plane
     }
     float inv_det = 1.0/det; // calculate once because div is expensive

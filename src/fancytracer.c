@@ -38,16 +38,16 @@ void render_scene(char *filename, int width, int height, char *objfile) {
     // Measure time spent in ray_intersects_mesh
     clock_t ray_intersect_start, ray_intersect_end;
     double ray_intersect_time = 0.0;
-
+    Vec3 cam_ray;
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             ray_intersect_start = clock();
-            Vec3 cam_ray = screen2CameraDir(cam, x, y);
+            screen2CameraDir(&cam, &x, &y, &cam_ray);
             ray_intersect_end = clock();
             ray_intersect_time += (double)(ray_intersect_end - ray_intersect_start) / CLOCKS_PER_SEC;
             int color = 255;
 
-            if (ray_intersects_mesh(cam.position, cam_ray, &mesh, &intersect_point)) {
+            if (ray_intersects_mesh(&cam.position, &cam_ray, &mesh, &intersect_point)) {
                 color = 0;
             }
 
@@ -72,11 +72,19 @@ void render_scene(char *filename, int width, int height, char *objfile) {
     printf("Time spent in ray_intersects_mesh: %f seconds\n", ray_intersect_time);
 }
 
+
 int main() {
-    char *filename = "output.png";
-    int width = 800;
-    int height = 400;
-    render_scene(filename, width, height, "baseScene.obj");
-    printf("Image created successfully: %s\n", filename);
+    Vec3 p1 = {1, 0, 0};
+    Vec3 p2 = {0, 1, 0};
+    Vec3 p3 = {0, 0, 1};
+
+    Triangle t = {p1, p2, p3};
+    Vec3 o = {0, 0, 0};
+    Vec3 r_dir = {0, 1, 0};
+    Ray r = {o, r_dir};
+    // Define a vector to store the intersection point
+    Vec3 res;
+    ray_intersects_triangle(&r, &t, &res);
+    printf("t = %f, u = %f, v = %f\n", res.x, res.y, res.z);
     return 0;
 }

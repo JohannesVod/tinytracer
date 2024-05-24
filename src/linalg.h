@@ -18,11 +18,11 @@ typedef struct {
     Vec3 origin, direction;
 } Ray;
 
-void vec3_subtract(const Vec3 *a, const Vec3 *b, Vec3 *result);
-void vec3_cross(const Vec3 *a, const Vec3 *b, Vec3 *result);
-float vec3_dot(const Vec3 *a, const Vec3 *b);
-void vec3_scale(const Vec3 *a, float t, Vec3 *result);
-void vec3_add(const Vec3 *a, const Vec3 *b, Vec3 *result);
+void vec3_subtract(Vec3 *a, Vec3 *b, Vec3 *result);
+void vec3_cross(Vec3 *a, Vec3 *b, Vec3 *result);
+float vec3_dot(Vec3 *a, Vec3 *b);
+void vec3_scale(Vec3 *a, float t, Vec3 *result);
+void vec3_add(Vec3 *a, Vec3 *b, Vec3 *result);
 int get_intersection_point(Plane *p, Ray *r, Vec3 *result);
 void vec3_copy(Vec3 *v, Vec3 *result);
 

@@ -1,4 +1,5 @@
 #include "linalg.h"
+#include <math.h>
 
 void vec3_subtract(Vec3 *a, Vec3 *b, Vec3 *result) {
     result->x = a->x - b->x;
@@ -36,7 +37,7 @@ void vec3_copy(Vec3 *v, Vec3 *result){
 
 int get_intersection_point(Plane *p, Ray *r, Vec3 *result){
     // check if ray is parallel to plane first:
-    if (vec3_dot(&r->direction, &p->normal) <= 1e-6){
+    if (fabs(vec3_dot(&r->direction, &p->normal)) <= 1e-6){
         return 0; // interpreted as no intersection
     }
     vec3_subtract(&p->origin, &r->origin, result);
