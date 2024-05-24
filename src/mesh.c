@@ -52,30 +52,53 @@ void free_mesh(Mesh *mesh) {
     free(mesh->triangles);
 }
 
-int ray_intersects_triangle(Vec3 ray_origin, Vec3 ray_vector, const Triangle *triangle, Vec3 *out_intersection_point) 
+/**
+ * @brief Intersects a ray with a triangle.
+ *
+ * It returns t, u, and v so that the intersection point can be represented as uv_1 + vv_2 + wv_3,
+ * where v_1, v_2, and v_3 are the points of the triangle, and t is the parameter for the ray.
+ */
+int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) 
 {
+    Vec3 e1; vec3_subtract(&triangle->v2, &triangle->v1, &e1);
+    Vec3 e2; vec3_subtract(&triangle->v3, &triangle->v1, &e2);
+    Vec3 e1_cross_e2; vec3_cross(&e1, &e2, out);
+    float det = vec3_dot(&ray->direction, &e1_cross_e2);
+    if (abs(det) <= 1e-6){
+        return 0; // no solution because ray is parallel to triangle plane
+    }
+    float inv_det = 1.0/det; // calculate once because div is expensive
+    Vec3 b; vec3_subtract(&ray->origin, &triangle->v1, &b);
+    Vec3 b_cross_D; vec3_cross(&b, &ray->direction, &b_cross_D);
     
+    float t = inv_det*vec3_dot(&b, &e1_cross_e2);
+    float u = inv_det*vec3_dot(&e2, &b_cross_D);
+    float v = -inv_det*vec3_dot(&e1, &b_cross_D);
+    out->x = t;
+    out->y = u;
+    out->z = v;
+    return 1;
 }
 
-int ray_intersects_mesh(Vec3 ray_origin, Vec3 ray_vector, const Mesh *mesh, Vec3 *out_intersection_point){
+int ray_intersects_mesh(Ray *ray, const Mesh *mesh, Vec3 *out){
     for (size_t i = 0; i < mesh->triangle_count; i++)
     {
-        if (ray_intersects_triangle(ray_origin, ray_vector, &mesh->triangles[i], out_intersection_point)){
+        if (ray_intersects_triangle(ray, &mesh->triangles[i], out)){
             return 1;
         }
     }
     return 0;
 }
 
-Vec3 screen2CameraDir(Camera cam, int screenPos_x, int screenPos_y){
+int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result){
     Vec3 cam_coor = {
-        (float)screenPos_x/(float)cam.height,
-        (float)screenPos_y/(float)cam.height,
+        (float)screenPos_x/(float)cam->height,
+        (float)screenPos_y/(float)cam->height,
         0
     };
     Vec3 center_shift = {
-        -((float)cam.width/(float)cam.height)*0.5, -0.5, -cam.focal_length
+        -((float)cam->width/(float)cam->height)*0.5, -0.5, -cam->focal_length
     };
-    Vec3 res = vec3_add(cam_coor, center_shift);
-    return res;
+    vec3_add(&cam_coor, &center_shift, result);
+    return 1;
 }
