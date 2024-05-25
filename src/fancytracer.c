@@ -38,19 +38,19 @@ void render_scene(char *filename, int width, int height, char *objfile) {
     // Measure time spent in ray_intersects_mesh
     clock_t ray_intersect_start, ray_intersect_end;
     double ray_intersect_time = 0.0;
-    Vec3 cam_ray;
+    Ray cam_ray;
+    cam_ray.origin = cam.position;
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            ray_intersect_start = clock();
-            screen2CameraDir(&cam, &x, &y, &cam_ray);
-            ray_intersect_end = clock();
-            ray_intersect_time += (double)(ray_intersect_end - ray_intersect_start) / CLOCKS_PER_SEC;
+            screen2CameraDir(&cam, x, y, &cam_ray.direction);
             int color = 255;
 
-            if (ray_intersects_mesh(&cam.position, &cam_ray, &mesh, &intersect_point)) {
+            ray_intersect_start = clock();
+            if (ray_intersects_mesh(&cam_ray, &mesh, &intersect_point)) {
                 color = 0;
             }
-
+            ray_intersect_end = clock();
+            ray_intersect_time += (double)(ray_intersect_end - ray_intersect_start) / CLOCKS_PER_SEC;
             image[(y * width + x) * 3] = (unsigned char)(color);                  // Blue
             image[(y * width + x) * 3 + 1] = (unsigned char)(color);              // Green
             image[(y * width + x) * 3 + 2] = (unsigned char)(color);              // Red
@@ -74,17 +74,10 @@ void render_scene(char *filename, int width, int height, char *objfile) {
 
 
 int main() {
-    Vec3 p1 = {1, 0, 0};
-    Vec3 p2 = {0, 1, 0};
-    Vec3 p3 = {0, 0, 1};
-
-    Triangle t = {p1, p2, p3};
-    Vec3 o = {0, 0, 0};
-    Vec3 r_dir = {0, 1, 0};
-    Ray r = {o, r_dir};
-    // Define a vector to store the intersection point
-    Vec3 res;
-    ray_intersects_triangle(&r, &t, &res);
-    printf("t = %f, u = %f, v = %f\n", res.x, res.y, res.z);
+    char *filename = "output.png";
+    int width = 800;
+    int height = 400;
+    render_scene(filename, width, height, "baseScene.obj");
+    printf("Image created successfully: %s\n", filename);
     return 0;
 }

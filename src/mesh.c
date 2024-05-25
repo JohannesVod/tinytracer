@@ -61,27 +61,38 @@ void free_mesh(Mesh *mesh) {
  */
 int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) 
 {
-    Vec3 e1; vec3_subtract(&triangle->v2, &triangle->v1, &e1);
-    Vec3 e2; vec3_subtract(&triangle->v3, &triangle->v1, &e2);
-    Vec3 e1_cross_e2; vec3_cross(&e1, &e2, out);
-    float det = vec3_dot(&ray->direction, &e1_cross_e2);
+    Vec3 e1, e2, e1_cross_e2;
+    vec3_subtract(&triangle->v2, &triangle->v1, &e1);
+    vec3_subtract(&triangle->v3, &triangle->v1, &e2);
+    vec3_cross(&e1, &e2, &e1_cross_e2);
+    float det = -vec3_dot(&ray->direction, &e1_cross_e2);
     if (fabs(det) <= 1e-6){
         return 0; // no solution because ray is parallel to triangle plane
     }
     float inv_det = 1.0/det; // calculate once because div is expensive
-    Vec3 b; vec3_subtract(&ray->origin, &triangle->v1, &b);
-    Vec3 b_cross_D; vec3_cross(&b, &ray->direction, &b_cross_D);
+    Vec3 b, b_cross_D;
+    vec3_subtract(&ray->origin, &triangle->v1, &b);
+    vec3_cross(&b, &ray->direction, &b_cross_D);
     
-    float t = inv_det*vec3_dot(&b, &e1_cross_e2);
-    float u = inv_det*vec3_dot(&e2, &b_cross_D);
-    float v = -inv_det*vec3_dot(&e1, &b_cross_D);
+    float u = inv_det*vec3_dot(&e2, &b_cross_D); //u
+    if (u < 0 || u > 1){
+        return 0;
+    }
+    float v = -inv_det*vec3_dot(&e1, &b_cross_D); //v
+    if (v < 0 || v+u > 1){
+        return 0;
+    }
+    float t = inv_det*vec3_dot(&b, &e1_cross_e2); //t
+    if (t <= 1e-6){
+        return 1;
+    }
     out->x = t;
     out->y = u;
     out->z = v;
     return 1;
 }
 
-int ray_intersects_mesh(Ray *ray, const Mesh *mesh, Vec3 *out){
+int ray_intersects_mesh(Ray *ray, Mesh *mesh, Vec3 *out){
     for (size_t i = 0; i < mesh->triangle_count; i++)
     {
         if (ray_intersects_triangle(ray, &mesh->triangles[i], out)){
