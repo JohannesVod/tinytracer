@@ -66,12 +66,12 @@ void read_obj_file(const char *filename, Mesh *mesh) {
     fclose(file);
 }
 
-inline void free_mesh(Mesh *mesh) {
+void free_mesh(Mesh *mesh) {
     free(mesh->vertices);
     free(mesh->triangles);
 }
 
-inline int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
+int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     Vec3 e1, e2, e1_cross_e2;
     vec3_subtract(&triangle->v2, &triangle->v1, &e1);
     vec3_subtract(&triangle->v3, &triangle->v1, &e2);
@@ -103,7 +103,7 @@ inline int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     return 1;
 }
 
-inline int ray_intersects_mesh(Ray *ray, Mesh *mesh, Vec3 *out) {
+int ray_intersects_mesh(Ray *ray, Mesh *mesh, Vec3 *out) {
     for (size_t i = 0; i < mesh->triangle_count; i++) {
         if (ray_intersects_triangle(ray, &mesh->triangles[i], out)) {
             return 1;
@@ -112,7 +112,7 @@ inline int ray_intersects_mesh(Ray *ray, Mesh *mesh, Vec3 *out) {
     return 0;
 }
 
-inline int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result) {
+int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result) {
     Vec3 cam_coor = {
         (float)screenPos_x / (float)cam->height,
         (float)screenPos_y / (float)cam->height,
