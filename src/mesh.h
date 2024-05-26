@@ -71,36 +71,79 @@ void free_mesh(Mesh *mesh) {
     free(mesh->triangles);
 }
 
-int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
-    Vec3 e1, e2, e1_cross_e2;
-    vec3_subtract(&triangle->v2, &triangle->v1, &e1);
-    vec3_subtract(&triangle->v3, &triangle->v1, &e2);
-    vec3_cross(&e1, &e2, &e1_cross_e2);
-    float det = -vec3_dot(&ray->direction, &e1_cross_e2);
-    if (fabs(det) <= 1e-6) {
-        return 0; // no solution because ray is parallel to triangle plane
+int ray_intersects_triangle_optimized(float rox, float roy, float roz,
+                                      float rdx, float rdy, float rdz,
+                                      float v0x, float v0y, float v0z,
+                                      float v1x, float v1y, float v1z,
+                                      float v2x, float v2y, float v2z,
+                                      float *t_out, float *u_out, float *v_out) 
+{
+    float e1x = v1x - v0x;
+    float e1y = v1y - v0y;
+    float e1z = v1z - v0z;
+    
+    float e2x = v2x - v0x;
+    float e2y = v2y - v0y;
+    float e2z = v2z - v0z;
+    
+    float hx = rdy * e2z - rdz * e2y;
+    float hy = rdz * e2x - rdx * e2z;
+    float hz = rdx * e2y - rdy * e2x;
+    
+    float a = e1x * hx + e1y * hy + e1z * hz;
+    
+    if (fabs(a) < 1e-6) {
+        return 0; // Parallel to triangle plane
     }
-    float inv_det = 1.0 / det; // calculate once because div is expensive
-    Vec3 b, b_cross_D;
-    vec3_subtract(&ray->origin, &triangle->v1, &b);
-    vec3_cross(&b, &ray->direction, &b_cross_D);
-
-    float u = inv_det * vec3_dot(&e2, &b_cross_D); // u
-    if (u < 0 || u > 1) {
+    
+    float f = 1.0 / a;
+    
+    float sx = rox - v0x;
+    float sy = roy - v0y;
+    float sz = roz - v0z;
+    
+    float u = f * (sx * hx + sy * hy + sz * hz);
+    
+    if (u < 0.0 || u > 1.0) {
         return 0;
     }
-    float v = -inv_det * vec3_dot(&e1, &b_cross_D); // v
-    if (v < 0 || v + u > 1) {
+    
+    float qx = sy * e1z - sz * e1y;
+    float qy = sz * e1x - sx * e1z;
+    float qz = sx * e1y - sy * e1x;
+    
+    float v = f * (rdx * qx + rdy * qy + rdz * qz);
+    
+    if (v < 0.0 || u + v > 1.0) {
         return 0;
     }
-    float t = inv_det * vec3_dot(&b, &e1_cross_e2); // t
-    if (t <= 1e-6) {
+    
+    float t = f * (e2x * qx + e2y * qy + e2z * qz);
+    
+    if (t > 1e-6) { // ray intersection
+        *t_out = t;
+        *u_out = u;
+        *v_out = v;
         return 1;
     }
-    out->x = t;
-    out->y = u;
-    out->z = v;
-    return 1;
+    return 0;
+}
+
+int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) 
+{
+    float t, u, v;
+    int hit = ray_intersects_triangle_optimized(ray->origin.x, ray->origin.y, ray->origin.z,
+                                                ray->direction.x, ray->direction.y, ray->direction.z,
+                                                triangle->v1.x, triangle->v1.y, triangle->v1.z,
+                                                triangle->v2.x, triangle->v2.y, triangle->v2.z,
+                                                triangle->v3.x, triangle->v3.y, triangle->v3.z,
+                                                &t, &u, &v);
+    if (hit) {
+        out->x = t;
+        out->y = u;
+        out->z = v;
+    }
+    return hit;
 }
 
 int ray_intersects_mesh(Ray *ray, Mesh *mesh, Vec3 *out) {
