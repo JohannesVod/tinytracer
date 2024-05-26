@@ -24,8 +24,8 @@ run: all
 debug: CFLAGS += -g -O0
 debug: clean dirs fancytracer
 
-release: CFLAGS += -O2
-release: dirs fancytracer
+release: CFLAGS += -O3
+release: clean dirs fancytracer
 
 fancytracer: $(OBJ)
 	$(CC) -o $(BIN)/fancytracer $^ $(LDFLAGS)
