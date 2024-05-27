@@ -13,7 +13,7 @@ OBJ = $(subst src, $(BIN), $(SRC:.c=.o))
 
 .PHONY: all clean debug release
 
-all: release
+all: fast
 
 dirs:
 	mkdir -p ./$(BIN)
@@ -24,8 +24,11 @@ run: all
 debug: CFLAGS += -g -O0
 debug: clean dirs fancytracer
 
-release: CFLAGS += -O3
-release: clean dirs fancytracer
+fast: CFLAGS += -O3
+fast: clean dirs fancytracer
+
+# release: CFLAGS += -O3
+# release: clean dirs fancytracer
 
 fancytracer: $(OBJ)
 	$(CC) -o $(BIN)/fancytracer $^ $(LDFLAGS)
