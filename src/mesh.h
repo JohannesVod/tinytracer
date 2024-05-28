@@ -113,9 +113,15 @@ int ray_intersects_mesh(Ray *ray, Mesh *mesh, Vec3 *out) {
 }
 
 int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result) {
-    result->x = (float)(screenPos_x-2*cam->width) / cam->height;
-    result->y = (float)screenPos_y / cam->height - 0.5;
-    result->z = -cam->focal_length;
+    Vec3 cam_coor = {
+        (float)screenPos_x / (float)cam->height,
+        (float)screenPos_y / (float)cam->height,
+        0
+    };
+    Vec3 center_shift = {
+        -((float)cam->width / (float)cam->height) * 0.5, -0.5, -cam->focal_length
+    };
+    vec3_add(&cam_coor, &center_shift, result);
     return 1;
 }
 
