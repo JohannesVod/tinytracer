@@ -47,7 +47,8 @@ void render_scene(char *filename, int width, int height, char *objfile) {
 
             ray_intersect_start = clock();
             if (ray_intersects_mesh(&cam_ray, &mesh, &intersect_point)) {
-                color = 0;
+                color = (int)255*reflectMesh(&cam_ray, &mesh, &intersect_point);
+                printf("%f", reflectMesh(&cam_ray, &mesh, &intersect_point));
             }
             ray_intersect_end = clock();
             ray_intersect_time += (double)(ray_intersect_end - ray_intersect_start) / CLOCKS_PER_SEC;

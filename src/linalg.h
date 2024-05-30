@@ -52,6 +52,24 @@ void vec3_copy(Vec3 *v, Vec3 *result) {
     result->z = v->z;
 }
 
+float vec3_magnitude(Vec3 *v) {
+    return sqrt(v->x * v->x + v->y * v->y + v->z * v->z);
+}
+
+void vec3_normalize(Vec3 *v, Vec3 *result) {
+    float magnitude = vec3_magnitude(v);
+    if (magnitude > 0) {
+        result->x = v->x / magnitude;
+        result->y = v->y / magnitude;
+        result->z = v->z / magnitude;
+    } else {
+        // If the magnitude is zero, return a zero vector
+        result->x = 0;
+        result->y = 0;
+        result->z = 0;
+    }
+}
+
 int get_intersection_point(Plane *p, Ray *r, Vec3 *result) {
     if (fabs(vec3_dot(&r->direction, &p->normal)) <= 1e-6) {
         return 0; // interpreted as no intersection

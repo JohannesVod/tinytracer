@@ -9,6 +9,7 @@
 
 typedef struct {
     Vec3 v1, v2, v3;
+    Vec3 normal;
 } Triangle;
 
 typedef struct {
@@ -24,6 +25,14 @@ typedef struct {
     int height;
     float focal_length;
 } Camera;
+
+void calculate_normal(Triangle *triangle) {
+    Vec3 e1, e2;
+    vec3_subtract(&triangle->v2, &triangle->v1, &e1);
+    vec3_subtract(&triangle->v3, &triangle->v1, &e2);
+    vec3_cross(&e1, &e2, &triangle->normal);
+    vec3_normalize(&triangle->normal, &triangle->normal);
+}
 
 void read_obj_file(const char *filename, Mesh *mesh) {
     FILE *file = fopen(filename, "r");
@@ -60,6 +69,7 @@ void read_obj_file(const char *filename, Mesh *mesh) {
             t.v1 = mesh->vertices[v1 - 1];
             t.v2 = mesh->vertices[v2 - 1];
             t.v3 = mesh->vertices[v3 - 1];
+            calculate_normal(&t);
             mesh->triangles[mesh->triangle_count++] = t;
         }
     }
@@ -76,7 +86,7 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     Vec3 e1, e2, e2_cross_raydir, b_cross_e1, b;
     vec3_subtract(&triangle->v2, &triangle->v1, &e1);
     vec3_subtract(&triangle->v3, &triangle->v1, &e2);
-    vec3_cross(&ray->direction, &e2,  &e2_cross_raydir);
+    vec3_cross(&ray->direction, &e2, &e2_cross_raydir);
     float det = vec3_dot(&e1, &e2_cross_raydir);
     if (det <= epsilon && -det <= epsilon) {
         return 0; // no solution because ray is parallel to triangle plane
@@ -103,6 +113,22 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     return 0;
 }
 
+float reflect(Ray *ray, Triangle *triangle, Vec3 *out){
+    float dot_prod = vec3_dot(&ray->direction, &triangle->normal);
+    vec3_scale(&triangle->normal, -2*dot_prod, out);
+    vec3_add(&ray->direction, out, out);
+    return dot_prod;
+}
+
+float reflectMesh(Ray *ray, Mesh *mesh, Vec3 *out) {
+    for (size_t i = 0; i < mesh->triangle_count; i++) {
+        if (ray_intersects_triangle(ray, &mesh->triangles[i], out)) {
+            return reflect(ray, &mesh->triangles[i], out);
+        }
+    }
+    return 0;
+}
+
 int ray_intersects_mesh(Ray *ray, Mesh *mesh, Vec3 *out) {
     for (size_t i = 0; i < mesh->triangle_count; i++) {
         if (ray_intersects_triangle(ray, &mesh->triangles[i], out)) {
@@ -122,6 +148,7 @@ int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result
         -((float)cam->width / (float)cam->height) * 0.5, -0.5, -cam->focal_length
     };
     vec3_add(&cam_coor, &center_shift, result);
+    vec3_normalize(result, result);
     return 1;
 }
 
