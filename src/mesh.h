@@ -14,7 +14,9 @@ typedef struct {
 
 typedef struct {
     Vec3 *vertices;
+    Vec3 *normals;
     size_t vertex_count;
+    size_t normal_count;
     Triangle *triangles;
     size_t triangle_count;
 } Mesh;
@@ -26,14 +28,6 @@ typedef struct {
     float focal_length;
 } Camera;
 
-void calculate_normal(Triangle *triangle) {
-    Vec3 e1, e2;
-    vec3_subtract(&triangle->v2, &triangle->v1, &e1);
-    vec3_subtract(&triangle->v3, &triangle->v1, &e2);
-    vec3_cross(&e1, &e2, &triangle->normal);
-    vec3_normalize(&triangle->normal, &triangle->normal);
-}
-
 void read_obj_file(const char *filename, Mesh *mesh) {
     FILE *file = fopen(filename, "r");
     if (!file) {
@@ -43,8 +37,10 @@ void read_obj_file(const char *filename, Mesh *mesh) {
 
     char line[256];
     size_t vertex_capacity = 10;
+    size_t normal_capacity = 10;
     size_t triangle_capacity = 10;
     mesh->vertices = malloc(vertex_capacity * sizeof(Vec3));
+    mesh->normals = malloc(normal_capacity * sizeof(Vec3));
     mesh->triangles = malloc(triangle_capacity * sizeof(Triangle));
     mesh->vertex_count = 0;
     mesh->triangle_count = 0;
@@ -58,18 +54,28 @@ void read_obj_file(const char *filename, Mesh *mesh) {
             Vec3 v;
             sscanf(line, "v %f %f %f", &v.x, &v.y, &v.z);
             mesh->vertices[mesh->vertex_count++] = v;
+        } else if (strncmp(line, "vn ", 3) == 0) {
+            if (mesh->normal_count >= normal_capacity) {
+                normal_capacity *= 2;
+                mesh->normals = realloc(mesh->normals, normal_capacity * sizeof(Vec3));
+            }
+            Vec3 n;
+            sscanf(line, "vn %f %f %f", &n.x, &n.y, &n.z);
+            mesh->normals[mesh->normal_count++] = n;
         } else if (strncmp(line, "f ", 2) == 0) {
             if (mesh->triangle_count >= triangle_capacity) {
                 triangle_capacity *= 2;
                 mesh->triangles = realloc(mesh->triangles, triangle_capacity * sizeof(Triangle));
             }
             int v1, v2, v3;
-            sscanf(line, "f %d/%*d/%*d %d/%*d/%*d %d/%*d/%*d", &v1, &v2, &v3);
+            int vn;
+            sscanf(line, "f %d/%*d/%*d %d/%*d/%*d %d/%*d/%d", &v1, &v2, &v3, &vn);
             Triangle t;
             t.v1 = mesh->vertices[v1 - 1];
             t.v2 = mesh->vertices[v2 - 1];
             t.v3 = mesh->vertices[v3 - 1];
-            calculate_normal(&t);
+            t.normal = mesh->normals[vn - 1];
+            //calculate_normal(&t);
             mesh->triangles[mesh->triangle_count++] = t;
         }
     }
