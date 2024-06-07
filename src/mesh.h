@@ -113,7 +113,7 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
         return 0;
     }
     float v_ = (vec3_dot(&P_, &triangle->N2) + det*triangle->d2);
-    if (v_*det < 0.0){  
+    if (v_*det < 0.0){
         return 0;
     }
     float det_inv = 1/det;
