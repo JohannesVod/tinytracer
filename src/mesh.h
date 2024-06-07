@@ -100,51 +100,31 @@ void free_mesh(Mesh *mesh) {
 
 int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     const float epsilon = 1e-6;
-    Vec3 e1, e2, e2_cross_raydir, b_cross_e1, b;
-    vec3_subtract(&triangle->v2, &triangle->v1, &e1);
-    vec3_subtract(&triangle->v3, &triangle->v1, &e2);
-    vec3_cross(&ray->direction, &e2, &e2_cross_raydir);
-    float det1 = vec3_dot(&e1, &e2_cross_raydir);
-    vec3_subtract(&ray->origin, &triangle->v1, &b);
-    float inv_det = 1.0 / det1; // calculate once because div is expensive
-    float u1 = inv_det * vec3_dot(&e2_cross_raydir, &b); // u
-    vec3_cross(&b, &e1, &b_cross_e1);
-    float v1 = inv_det * vec3_dot(&ray->direction, &b_cross_e1); // v
-    float t1 = inv_det * vec3_dot(&e2, &b_cross_e1); // t
-
-    // if (det1 <= epsilon && -det1 <= epsilon) {
-    //     return 0; // no solution because ray is parallel to triangle plane
-    // }
-    // if (u1 < 0.0 || u1 > 1.0) {
-    //     return 0;
-    // }
-    // if (v1 < 0.0 || v1 + u1 > 1.0) {
-    //     return 0;
-    // }
-    // if (t1 >= epsilon) {
-    //     return 1;
-    // }
-    // return 0;
-
     float det = vec3_dot(&ray->direction, &triangle->N);
-    float t_ = vec3_dot(&ray->origin, &triangle->N) - triangle->d;
-    float t = t_/det;
+    if (det <= epsilon && -det <= epsilon) {
+        return 0; // no solution because ray is parallel to triangle plane
+    }
+    float t_ = -(vec3_dot(&ray->origin, &triangle->N) + triangle->d);
     Vec3 det_O; vec3_scale(&ray->origin, det, &det_O);
     Vec3 t_D; vec3_scale(&ray->direction, t_, &t_D);
     Vec3 P_; vec3_add(&det_O, &t_D, &P_);
     float u_ = (vec3_dot(&P_, &triangle->N1) + det*triangle->d1);
-    float v_ = (vec3_dot(&P_, &triangle->N2) + det*triangle->d2);
-    float u = u_/det;
-    float v = v_/det;
-    //printf("%f, %f\n", u1, u);
-
-    if (det <= epsilon && -det <= epsilon) {
-        return 0; // no solution because ray is parallel to triangle plane
-    }
-    if (u < 0.0 || u > 1.0) {
+    if (u_*det < 0.0){
         return 0;
     }
-    if (v < 0.0 || v + u > 1.0) {
+    float v_ = (vec3_dot(&P_, &triangle->N2) + det*triangle->d2);
+    if (v_*det < 0.0){  
+        return 0;
+    }
+    float det_inv = 1/det;
+    float t = t_*det_inv;
+    float u = u_*det_inv;
+    float v = v_*det_inv;
+
+    if (u > 1.0) {
+        return 0;
+    }
+    if (v + u > 1.0) {
         return 0;
     }
     if (t >= epsilon) {
