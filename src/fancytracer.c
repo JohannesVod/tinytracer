@@ -43,13 +43,12 @@ void render_scene(char *filename, int width, int height, char *objfile) {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             screen2CameraDir(&cam, x, y, &cam_ray.direction);
-            int color = 255;
+            int color = 0;
 
             ray_intersect_start = clock();
-            if (ray_intersects_mesh(&cam_ray, &mesh, &intersect_point)) {
-                color = 0;
-                // color = (int)255*reflectMesh(&cam_ray, &mesh, &intersect_point);
-                // printf("%f", reflectMesh(&cam_ray, &mesh, &intersect_point));
+            int tria_ind = get_triangle_intersect(&cam_ray, &mesh, &intersect_point);
+            if (tria_ind != -1) {
+                color = (int)255*reflect(&cam_ray, &mesh.triangles[tria_ind], &intersect_point);
             }
             ray_intersect_end = clock();
             ray_intersect_time += (double)(ray_intersect_end - ray_intersect_start) / CLOCKS_PER_SEC;

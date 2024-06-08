@@ -126,13 +126,18 @@ float reflect(Ray *ray, Triangle *triangle, Vec3 *out){
     return dot_prod;
 }
 
-float reflectMesh(Ray *ray, Mesh *mesh, Vec3 *out) {
+int get_triangle_intersect(Ray *ray, Mesh *mesh, Vec3 *out){
+    float min_t = 1e10;
+    int tria_ind = -1;
     for (size_t i = 0; i < mesh->triangle_count; i++) {
         if (ray_intersects_triangle(ray, &mesh->triangles[i], out)) {
-            return reflect(ray, &mesh->triangles[i], out);
+            if (out->x < min_t){
+                min_t = out->x;
+                tria_ind = i;
+            }
         }
     }
-    return 0;
+    return tria_ind;
 }
 
 int ray_intersects_mesh(Ray *ray, Mesh *mesh, Vec3 *out) {
