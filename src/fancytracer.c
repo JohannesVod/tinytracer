@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <omp.h> // Include the OpenMP header
 #include "mesh.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -8,24 +9,15 @@
 
 void render_scene(char *filename, int width, int height, char *objfile) {
     // Measure total execution time
-    clock_t total_start = clock();
+    double total_start = omp_get_wtime();
 
-    // load mesh
+    // Load mesh
     Mesh mesh = {0};
     read_obj_file(objfile, &mesh);
     Vec3 cam_pos = {0, 0, 5};
     Vec3 cam_rot = {0, 0, 0};
     float focal_length = 1;
     Camera cam = {cam_pos, cam_rot, width, height, focal_length};
-
-    // Example usage: Print triangles
-    // for (size_t i = 0; i < mesh.triangle_count; ++i) {
-    //     Triangle t = mesh.triangles[i];
-    //     printf("Triangle %zu:\n", i + 1);
-    //     printf("  v1: (%f, %f, %f)\n", t.v1.x, t.v1.y, t.v1.z);
-    //     printf("  v2: (%f, %f, %f)\n", t.v2.x, t.v2.y, t.v2.z);
-    //     printf("  v3: (%f, %f, %f)\n", t.v3.x, t.v3.y, t.v3.z);
-    // }
 
     unsigned char *image = (unsigned char *)malloc(width * height * 3);
     if (!image) {
@@ -35,28 +27,47 @@ void render_scene(char *filename, int width, int height, char *objfile) {
 
     Vec3 intersect_point = {0, 0, 0};
 
-    // Measure time spent in ray_intersects_mesh
-    clock_t ray_intersect_start, ray_intersect_end;
+    // Measure time spent in ray_intersects_mesh and count the number of tests
     double ray_intersect_time = 0.0;
-    Ray cam_ray;
-    cam_ray.origin = cam.position;
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            screen2CameraDir(&cam, x, y, &cam_ray.direction);
-            int color = 0;
+    int num_threads = 0;
 
-            ray_intersect_start = clock();
-            int tria_ind = get_triangle_intersect(&cam_ray, &mesh, &intersect_point);
-            if (tria_ind != -1) {
-                color = (int)255*reflect(&cam_ray, &mesh.triangles[tria_ind], &intersect_point);
+    // Start parallel region
+    #pragma omp parallel
+    {
+        double thread_ray_intersect_time = 0.0;
+        long long thread_num_tests = 0;
+        Ray cam_ray;
+        cam_ray.origin = cam.position;
+
+        #pragma omp for collapse(2) schedule(dynamic)
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                screen2CameraDir(&cam, x, y, &cam_ray.direction);
+                int color = 0;
+
+                double ray_intersect_start = omp_get_wtime();
+                int tria_ind = get_triangle_intersect(&cam_ray, &mesh, &intersect_point);
+                if (tria_ind != -1) {
+                    color = (int)255 * reflect(&cam_ray, &mesh.triangles[tria_ind], &intersect_point);
+                }
+                double ray_intersect_end = omp_get_wtime();
+                thread_ray_intersect_time += (ray_intersect_end - ray_intersect_start);
+                thread_num_tests++;
+                image[(y * width + x) * 3] = (unsigned char)(color);                  // Blue
+                image[(y * width + x) * 3 + 1] = (unsigned char)(color);              // Green
+                image[(y * width + x) * 3 + 2] = (unsigned char)(color);              // Red
             }
-            ray_intersect_end = clock();
-            ray_intersect_time += (double)(ray_intersect_end - ray_intersect_start) / CLOCKS_PER_SEC;
-            image[(y * width + x) * 3] = (unsigned char)(color);                  // Blue
-            image[(y * width + x) * 3 + 1] = (unsigned char)(color);              // Green
-            image[(y * width + x) * 3 + 2] = (unsigned char)(color);              // Red
         }
-    }
+
+        // Combine the times and counts from all threads
+        #pragma omp atomic
+        ray_intersect_time += thread_ray_intersect_time;
+
+        #pragma omp single
+        {
+            num_threads = omp_get_num_threads();
+        }
+    } // End parallel region
 
     if (!stbi_write_png(filename, width, height, 3, image, width * 3)) {
         printf("Error: Unable to write image to file %s.\n", filename);
@@ -66,13 +77,13 @@ void render_scene(char *filename, int width, int height, char *objfile) {
     free_mesh(&mesh);
     free(image);
 
-    clock_t total_end = clock();
-    double total_time = (double)(total_end - total_start) / CLOCKS_PER_SEC;
+    double total_end = omp_get_wtime();
+    double total_time = total_end - total_start;
+    double average_intersect_time = ray_intersect_time / num_threads;
 
     printf("Total execution time: %f seconds\n", total_time);
-    printf("Time spent in ray_intersects_mesh: %f seconds\n", ray_intersect_time);
+    printf("Average time per intersection test: %f seconds\n", average_intersect_time);
 }
-
 
 int main() {
     char *filename = "output.png";

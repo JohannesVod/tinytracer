@@ -7,6 +7,10 @@ CFLAGS += -Wno-gnu-compound-literal-initializer -Wno-gnu-zero-variadic-macro-arg
 CFLAGS += -Ilib/stb
 LDFLAGS = -lm
 
+# Add OpenMP flag
+CFLAGS += -fopenmp
+LDFLAGS += -fopenmp
+
 BIN = bin
 SRC = $(wildcard src/**/*.c) $(wildcard src/*.c) $(wildcard src/**/**/*.c) $(wildcard src/**/**/**/*.c)
 OBJ = $(subst src, $(BIN), $(SRC:.c=.o))
