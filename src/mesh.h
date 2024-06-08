@@ -8,8 +8,8 @@
 #include "linalg.h"
 
 typedef struct {
-    Vec3 N, N1, N2; // planes
-    float d, d1, d2; // distances of planes from origin
+    Vec3 v1, v2, v3;
+    Vec3 normal;
 } Triangle;
 
 typedef struct {
@@ -67,25 +67,15 @@ void read_obj_file(const char *filename, Mesh *mesh) {
                 triangle_capacity *= 2;
                 mesh->triangles = realloc(mesh->triangles, triangle_capacity * sizeof(Triangle));
             }
-            int v1I, v2I, v3I;
+            int v1, v2, v3;
             int vn;
-            sscanf(line, "f %d/%*d/%*d %d/%*d/%*d %d/%*d/%d", &v1I, &v2I, &v3I, &vn);
+            sscanf(line, "f %d/%*d/%*d %d/%*d/%*d %d/%*d/%d", &v1, &v2, &v3, &vn);
             Triangle t;
-            Vec3 v1 = mesh->vertices[v1I - 1];
-            Vec3 v2 = mesh->vertices[v2I - 1];
-            Vec3 v3 = mesh->vertices[v3I - 1];
-            Vec3 e1; vec3_subtract(&v2, &v1, &e1);
-            Vec3 e2; vec3_subtract(&v3, &v1, &e2);
-            vec3_cross(&e1, &e2, &t.N);
-            t.d = -vec3_dot(&t.N, &v1);
-            vec3_cross(&e2, &t.N, &t.N1);
-            float mag = vec3_magnitude(&t.N);
-            mag = 1/(mag*mag);
-            vec3_scale(&t.N1, mag, &t.N1);
-            t.d1 = -vec3_dot(&t.N1, &v1);
-            vec3_cross(&t.N, &e1, &t.N2);
-            vec3_scale(&t.N2, mag, &t.N2);
-            t.d2 = -vec3_dot(&t.N2, &v1);
+            t.v1 = mesh->vertices[v1 - 1];
+            t.v2 = mesh->vertices[v2 - 1];
+            t.v3 = mesh->vertices[v3 - 1];
+            t.normal = mesh->normals[vn - 1];
+            //calculate_normal(&t);
             mesh->triangles[mesh->triangle_count++] = t;
         }
     }
@@ -99,35 +89,39 @@ void free_mesh(Mesh *mesh) {
 
 int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     const float epsilon = 1e-6;
-    float det = vec3_dot(&ray->direction, &triangle->N);
-    float t_ = -(vec3_dot(&ray->origin, &triangle->N) + triangle->d);
-    Vec3 det_O; vec3_scale(&ray->origin, det, &det_O);
-    Vec3 t_D; vec3_scale(&ray->direction, t_, &t_D);
-    Vec3 P_; vec3_add(&det_O, &t_D, &P_);
-    float u_ = (vec3_dot(&P_, &triangle->N1) + det*triangle->d1);
-    float v_ = (vec3_dot(&P_, &triangle->N2) + det*triangle->d2);
-    float temp_det = det - u_ - v_;
-    int pdet0 = *(int*)&temp_det;
-    int pdetu = *(int*)&u_;
-    int pdetv = *(int*)&v_;
-    pdet0 = pdet0 ^ pdetu;
-    pdet0 = pdet0 | (pdetu ^ pdetv);
-    if (pdet0 & 0x80000000)
+    Vec3 e1, e2, e2_cross_raydir, b_cross_e1, b;
+    vec3_subtract(&triangle->v2, &triangle->v1, &e1);
+    vec3_subtract(&triangle->v3, &triangle->v1, &e2);
+    vec3_cross(&ray->direction, &e2, &e2_cross_raydir);
+    float det = vec3_dot(&e1, &e2_cross_raydir);
+    if (det <= epsilon && -det <= epsilon) {
+        return 0; // no solution because ray is parallel to triangle plane
+    }
+    float inv_det = 1.0 / det; // calculate once because div is expensive
+    vec3_subtract(&ray->origin, &triangle->v1, &b);
+
+    float u = inv_det * vec3_dot(&e2_cross_raydir, &b); // u
+    if (u < 0.0 || u > 1.0) {
         return 0;
-    float det_inv = 1/det;
-    float t = t_*det_inv;
-    float u = u_*det_inv;
-    float v = v_*det_inv;
+    }
+    vec3_cross(&b, &e1, &b_cross_e1);
+    float v = inv_det * vec3_dot(&ray->direction, &b_cross_e1); // v
+    if (v < 0.0 || v + u > 1.0) {
+        return 0;
+    }
+    float t = inv_det * vec3_dot(&e2, &b_cross_e1); // t
     if (t >= epsilon) {
+        out->x = t;
+        out->y = u;
+        out->z = v;
         return 1;
     }
     return 0;
 }
 
 float reflect(Ray *ray, Triangle *triangle, Vec3 *out){
-    Vec3 normalized_tria; vec3_normalize(&triangle->N, &normalized_tria);
-    float dot_prod = vec3_dot(&ray->direction, &triangle->N);
-    vec3_scale(&triangle->N, -2*dot_prod, out);
+    float dot_prod = vec3_dot(&ray->direction, &triangle->normal);
+    vec3_scale(&triangle->normal, -2*dot_prod, out);
     vec3_add(&ray->direction, out, out);
     return dot_prod;
 }
