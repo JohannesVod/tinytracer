@@ -7,7 +7,13 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-void render_scene(char *filename, int width, int height, char *objfile) {
+const float FOCAL_LENGTH = 2.0f;
+const int WIDTH = 800;
+const int HEIGHT = 400;
+const char *FILENAME = "output.png";
+const char *OBJFILE = "baseScene.obj";
+
+void render_scene(const char *filename, const int width, const int height, const char *objfile) {
     // Measure total execution time
     double total_start = omp_get_wtime();
 
@@ -16,8 +22,7 @@ void render_scene(char *filename, int width, int height, char *objfile) {
     read_obj_file(objfile, &mesh);
     Vec3 cam_pos = {0, 0, 5};
     Vec3 cam_rot = {0, 0, 0};
-    float focal_length = 1;
-    Camera cam = {cam_pos, cam_rot, width, height, focal_length};
+    Camera cam = {cam_pos, cam_rot, width, height, FOCAL_LENGTH};
 
     unsigned char *image = (unsigned char *)malloc(width * height * 3);
     if (!image) {
@@ -48,7 +53,8 @@ void render_scene(char *filename, int width, int height, char *objfile) {
                 double ray_intersect_start = omp_get_wtime();
                 int tria_ind = get_triangle_intersect(&cam_ray, &mesh, &intersect_point);
                 if (tria_ind != -1) {
-                    color = (int)255 * reflect(&cam_ray, &mesh.triangles[tria_ind], &intersect_point);
+                    Vec3 out_reflect;
+                    color = (int)255 * reflect(&cam_ray, &intersect_point, &mesh.triangles[tria_ind], &out_reflect);
                 }
                 double ray_intersect_end = omp_get_wtime();
                 thread_ray_intersect_time += (ray_intersect_end - ray_intersect_start);
@@ -86,10 +92,7 @@ void render_scene(char *filename, int width, int height, char *objfile) {
 }
 
 int main() {
-    char *filename = "output.png";
-    int width = 800;
-    int height = 400;
-    render_scene(filename, width, height, "baseScene.obj");
-    printf("Image created successfully: %s\n", filename);
+    render_scene(FILENAME, WIDTH, HEIGHT, OBJFILE);
+    printf("Image created successfully: %s\n", FILENAME);
     return 0;
 }

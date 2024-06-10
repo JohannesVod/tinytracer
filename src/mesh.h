@@ -9,14 +9,11 @@
 
 typedef struct {
     Vec3 v1, v2, v3;
-    Vec3 normal;
+    Vec3 vn1, vn2, vn3; // maybe remove later to increase cache locality
+    int material;
 } Triangle;
 
 typedef struct {
-    Vec3 *vertices;
-    Vec3 *normals;
-    size_t vertex_count;
-    size_t normal_count;
     Triangle *triangles;
     size_t triangle_count;
 } Mesh;
@@ -39,29 +36,30 @@ void read_obj_file(const char *filename, Mesh *mesh) {
     size_t vertex_capacity = 10;
     size_t normal_capacity = 10;
     size_t triangle_capacity = 10;
-    mesh->vertices = malloc(vertex_capacity * sizeof(Vec3));
-    mesh->normals = malloc(normal_capacity * sizeof(Vec3));
+    Vec3 *vertices = malloc(vertex_capacity * sizeof(Vec3));
+    Vec3 *normals = malloc(normal_capacity * sizeof(Vec3));
+    size_t normal_count = 0;
+    size_t vertex_count = 0;
     mesh->triangles = malloc(triangle_capacity * sizeof(Triangle));
-    mesh->vertex_count = 0;
     mesh->triangle_count = 0;
 
     while (fgets(line, sizeof(line), file)) {
         if (strncmp(line, "v ", 2) == 0) {
-            if (mesh->vertex_count >= vertex_capacity) {
+            if (vertex_count >= vertex_capacity) {
                 vertex_capacity *= 2;
-                mesh->vertices = realloc(mesh->vertices, vertex_capacity * sizeof(Vec3));
+                vertices = realloc(vertices, vertex_capacity * sizeof(Vec3));
             }
             Vec3 v;
             sscanf(line, "v %f %f %f", &v.x, &v.y, &v.z);
-            mesh->vertices[mesh->vertex_count++] = v;
+            vertices[vertex_count++] = v;
         } else if (strncmp(line, "vn ", 3) == 0) {
-            if (mesh->normal_count >= normal_capacity) {
+            if (normal_count >= normal_capacity) {
                 normal_capacity *= 2;
-                mesh->normals = realloc(mesh->normals, normal_capacity * sizeof(Vec3));
+                normals = realloc(normals, normal_capacity * sizeof(Vec3));
             }
             Vec3 n;
             sscanf(line, "vn %f %f %f", &n.x, &n.y, &n.z);
-            mesh->normals[mesh->normal_count++] = n;
+            normals[normal_count++] = n;
         } else if (strncmp(line, "f ", 2) == 0) {
             if (mesh->triangle_count >= triangle_capacity) {
                 triangle_capacity *= 2;
@@ -71,19 +69,23 @@ void read_obj_file(const char *filename, Mesh *mesh) {
             int vn;
             sscanf(line, "f %d/%*d/%*d %d/%*d/%*d %d/%*d/%d", &v1, &v2, &v3, &vn);
             Triangle t;
-            t.v1 = mesh->vertices[v1 - 1];
-            t.v2 = mesh->vertices[v2 - 1];
-            t.v3 = mesh->vertices[v3 - 1];
-            t.normal = mesh->normals[vn - 1];
+            t.v1 = vertices[v1 - 1];
+            t.v2 = vertices[v2 - 1];
+            t.v3 = vertices[v3 - 1];
+            t.vn1 = normals[v1 - 1];
+            t.vn2 = normals[v2 - 1];
+            t.vn3 = normals[v3 - 1];
+            // t.normal = normals[vn - 1];
             //calculate_normal(&t);
             mesh->triangles[mesh->triangle_count++] = t;
         }
     }
+    free(vertices);
+    free(normals);
     fclose(file);
 }
 
 void free_mesh(Mesh *mesh) {
-    free(mesh->vertices);
     free(mesh->triangles);
 }
 
@@ -119,9 +121,20 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     return 0;
 }
 
-float reflect(Ray *ray, Triangle *triangle, Vec3 *out){
-    float dot_prod = vec3_dot(&ray->direction, &triangle->normal);
-    vec3_scale(&triangle->normal, -2*dot_prod, out);
+float reflect(Ray *ray, Vec3 *barycentric, Triangle *triangle, Vec3 *out){
+    float u = barycentric->y;
+    float v = barycentric->z;
+    float w = 1 - u - v;
+    Vec3 normal;
+    Vec3 vn1, vn2, vn3; 
+    vec3_scale(&triangle->vn1, w, &vn1);
+    vec3_scale(&triangle->vn2, u, &vn2);
+    vec3_scale(&triangle->vn3, v, &vn3);
+    vec3_add(&vn1, &vn2, &normal);
+    vec3_add(&normal, &vn3, &normal);
+    vec3_normalize(&normal, &normal); // needed?
+    float dot_prod = vec3_dot(&ray->direction, &normal);
+    vec3_scale(&normal, -2*dot_prod, out);
     vec3_add(&ray->direction, out, out);
     return dot_prod;
 }
@@ -129,10 +142,12 @@ float reflect(Ray *ray, Triangle *triangle, Vec3 *out){
 int get_triangle_intersect(Ray *ray, Mesh *mesh, Vec3 *out){
     float min_t = 1e10;
     int tria_ind = -1;
+    Vec3 out_temp;
     for (size_t i = 0; i < mesh->triangle_count; i++) {
-        if (ray_intersects_triangle(ray, &mesh->triangles[i], out)) {
-            if (out->x < min_t){
-                min_t = out->x;
+        if (ray_intersects_triangle(ray, &mesh->triangles[i], &out_temp)) {
+            if (out_temp.x < min_t){
+                vec3_copy(&out_temp, out);
+                min_t = out_temp.x;
                 tria_ind = i;
             }
         }

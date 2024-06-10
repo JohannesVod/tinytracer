@@ -1,1 +1,1 @@
-This is a pure c raytracer that can render a scene defined as a json file
+A tiny fast raytracer written in plain C with almost no dependencies which supports basic materials.
