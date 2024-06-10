@@ -10,6 +10,7 @@
 typedef struct {
     Vec3 v1, v2, v3;
     Vec3 vn1, vn2, vn3; // maybe remove later to increase cache locality
+    Vec3 normal;
     int material;
 } Triangle;
 
@@ -72,9 +73,17 @@ void read_obj_file(const char *filename, Mesh *mesh) {
             t.v1 = vertices[v1 - 1];
             t.v2 = vertices[v2 - 1];
             t.v3 = vertices[v3 - 1];
+
+            Vec3 e1, e2;
+            vec3_subtract(&t.v2, &t.v1, &e1);
+            vec3_subtract(&t.v3, &t.v1, &e2);
+            Vec3 this_normals; vec3_cross(&e1, &e2, &this_normals);
+            vec3_normalize(&this_normals, &this_normals);
+
             t.vn1 = normals[v1 - 1];
             t.vn2 = normals[v2 - 1];
             t.vn3 = normals[v3 - 1];
+            t.normal = this_normals;
             // t.normal = normals[vn - 1];
             //calculate_normal(&t);
             mesh->triangles[mesh->triangle_count++] = t;

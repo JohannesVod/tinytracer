@@ -37,14 +37,14 @@ void render_scene(const char *filename, const int width, const int height, const
     int num_threads = 0;
 
     // Start parallel region
-    #pragma omp parallel
+    // #pragma omp parallel
     {
         double thread_ray_intersect_time = 0.0;
         long long thread_num_tests = 0;
         Ray cam_ray;
         cam_ray.origin = cam.position;
 
-        #pragma omp for collapse(2) schedule(dynamic)
+        //#pragma omp for collapse(2) schedule(dynamic)
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 screen2CameraDir(&cam, x, y, &cam_ray.direction);
@@ -54,6 +54,7 @@ void render_scene(const char *filename, const int width, const int height, const
                 int tria_ind = get_triangle_intersect(&cam_ray, &mesh, &intersect_point);
                 if (tria_ind != -1) {
                     Vec3 out_reflect;
+                    // color = (int)40*intersect_point.x;
                     color = (int)255 * reflect(&cam_ray, &intersect_point, &mesh.triangles[tria_ind], &out_reflect);
                 }
                 double ray_intersect_end = omp_get_wtime();
