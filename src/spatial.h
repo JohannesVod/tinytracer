@@ -9,6 +9,15 @@ typedef struct {
     int **partitioning; // cells 
 } Scene;
 
+typedef struct {
+    Vec3 coor;
+    float size;
+} Cube;
+
+int triangle_intersects_cube(Triangle t, Cube c){
+    
+}
+
 Scene build(Triangle *triangles){
     // assumes, that every triangle coordinate is positive
     

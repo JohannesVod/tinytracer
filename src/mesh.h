@@ -10,7 +10,6 @@
 typedef struct {
     Vec3 v1, v2, v3;
     Vec3 vn1, vn2, vn3; // maybe remove later to increase cache locality
-    Vec3 normal;
     int material;
 } Triangle;
 
@@ -83,7 +82,6 @@ void read_obj_file(const char *filename, Mesh *mesh) {
             t.vn1 = normals[v1 - 1];
             t.vn2 = normals[v2 - 1];
             t.vn3 = normals[v3 - 1];
-            t.normal = this_normals;
             // t.normal = normals[vn - 1];
             //calculate_normal(&t);
             mesh->triangles[mesh->triangle_count++] = t;
@@ -100,6 +98,7 @@ void free_mesh(Mesh *mesh) {
 
 int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     const float epsilon = 1e-6;
+    const float epsilon2 = 1e-3;
     Vec3 e1, e2, e2_cross_raydir, b_cross_e1, b;
     vec3_subtract(&triangle->v2, &triangle->v1, &e1);
     vec3_subtract(&triangle->v3, &triangle->v1, &e2);
@@ -112,12 +111,12 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     vec3_subtract(&ray->origin, &triangle->v1, &b);
 
     float u = inv_det * vec3_dot(&e2_cross_raydir, &b); // u
-    if (u < 0.0 || u > 1.0) {
+    if (u < -epsilon2 || u > 1.0+epsilon2) {
         return 0;
     }
     vec3_cross(&b, &e1, &b_cross_e1);
     float v = inv_det * vec3_dot(&ray->direction, &b_cross_e1); // v
-    if (v < 0.0 || v + u > 1.0) {
+    if (v < -epsilon2 || v + u > 1.0+epsilon2) {
         return 0;
     }
     float t = inv_det * vec3_dot(&e2, &b_cross_e1); // t
