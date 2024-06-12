@@ -7,6 +7,10 @@ typedef struct {
 } Vec3;
 
 typedef struct {
+    int x, y, z;
+} Vec3Int;
+
+typedef struct {
     float x, y;
 } Vec2;
 
@@ -46,10 +50,47 @@ void vec3_add(Vec3 *a, Vec3 *b, Vec3 *result) {
     result->z = a->z + b->z;
 }
 
+void vec3_div(Vec3 *a, Vec3 *b, Vec3 *result){
+    result->x = a->x/b->x;
+    result->y = a->y/b->y;
+    result->z = a->z/b->z;
+}
+
 void vec3_copy(Vec3 *v, Vec3 *result) {
     result->x = v->x;
     result->y = v->y;
     result->z = v->z;
+}
+
+void vec3_floor(Vec3 *v, Vec3 *result) {
+    result->x = floorf(v->x);
+    result->y = floorf(v->y);
+    result->z = floorf(v->z);
+}
+
+void vec3_ceil(Vec3 *v, Vec3 *result) {
+    result->x = ceilf(v->x);
+    result->y = ceilf(v->y);
+    result->z = ceilf(v->z);
+}
+
+void vec3_round(Vec3 *v, Vec3 *result) {
+    result->x = roundf(v->x);
+    result->y = roundf(v->y);
+    result->z = roundf(v->z);
+}
+
+void vec3_2int(Vec3 *v, Vec3Int *result){
+    result->x = (int)(v->x+0.001);
+    result->y = (int)(v->y+0.001);
+    result->z = (int)(v->z+0.001);
+}
+
+/* adds small value to every coordinate that is zero*/
+void vec3_fix(Vec3 *v){
+    if(v->x == 0){v->x += 0.0000001f;}
+    if(v->y == 0){v->y += 0.0000001f;}
+    if(v->z == 0){v->z += 0.0000001f;}
 }
 
 float vec3_magnitude(Vec3 *v) {

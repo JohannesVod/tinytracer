@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <omp.h> // Include the OpenMP header
-#include "mesh.h"
+#include "spatial.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -20,6 +20,11 @@ void render_scene(const char *filename, const int width, const int height, const
     // Load mesh
     Mesh mesh = {0};
     read_obj_file(objfile, &mesh);
+
+    Scene mainScene;
+    buildScene(mesh.triangles, mesh.triangle_count, &mainScene, 3);
+    test(&mainScene);
+
     Vec3 cam_pos = {0, 0, 5};
     Vec3 cam_rot = {0, 0, 0};
     Camera cam = {cam_pos, cam_rot, width, height, FOCAL_LENGTH};
@@ -29,7 +34,6 @@ void render_scene(const char *filename, const int width, const int height, const
         printf("Error: Unable to allocate memory for image.\n");
         return;
     }
-
 
     // Measure time spent in ray_intersects_mesh and count the number of tests
     double ray_intersect_time = 0.0;
@@ -81,7 +85,7 @@ void render_scene(const char *filename, const int width, const int height, const
         free(image);
         return;
     }
-    free_mesh(&mesh);
+    freeScene(&mainScene);
     free(image);
 
     double total_end = omp_get_wtime();

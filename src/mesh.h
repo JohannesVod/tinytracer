@@ -14,8 +14,13 @@ typedef struct {
 } Triangle;
 
 typedef struct {
+    Vec3 p;
+    float rad;
+} Sphere;
+
+typedef struct {
     Triangle *triangles;
-    size_t triangle_count;
+    int triangle_count;
 } Mesh;
 
 typedef struct {
@@ -33,13 +38,13 @@ void read_obj_file(const char *filename, Mesh *mesh) {
     }
 
     char line[256];
-    size_t vertex_capacity = 10;
-    size_t normal_capacity = 10;
-    size_t triangle_capacity = 10;
+    int vertex_capacity = 10;
+    int normal_capacity = 10;
+    int triangle_capacity = 10;
     Vec3 *vertices = malloc(vertex_capacity * sizeof(Vec3));
     Vec3 *normals = malloc(normal_capacity * sizeof(Vec3));
-    size_t normal_count = 0;
-    size_t vertex_count = 0;
+    int normal_count = 0;
+    int vertex_count = 0;
     mesh->triangles = malloc(triangle_capacity * sizeof(Triangle));
     mesh->triangle_count = 0;
 
@@ -151,7 +156,7 @@ int get_triangle_intersect(Ray *ray, Mesh *mesh, Vec3 *out){
     float min_t = 1e10;
     int tria_ind = -1;
     Vec3 out_temp;
-    for (size_t i = 0; i < mesh->triangle_count; i++) {
+    for (int i = 0; i < mesh->triangle_count; i++) {
         if (ray_intersects_triangle(ray, &mesh->triangles[i], &out_temp)) {
             if (out_temp.x < min_t){
                 vec3_copy(&out_temp, out);
@@ -164,7 +169,7 @@ int get_triangle_intersect(Ray *ray, Mesh *mesh, Vec3 *out){
 }
 
 int ray_intersects_mesh(Ray *ray, Mesh *mesh, Vec3 *out) {
-    for (size_t i = 0; i < mesh->triangle_count; i++) {
+    for (int i = 0; i < mesh->triangle_count; i++) {
         if (ray_intersects_triangle(ray, &mesh->triangles[i], out)) {
             return 1;
         }
