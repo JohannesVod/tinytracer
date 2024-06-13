@@ -70,9 +70,7 @@ void point2ceil(Vec3 *p, float boxsize){
     vec3_scale(p, boxsize, p);
 }
 
-/*
-Calculates the gridcell corresponding to a point. Returns cell id as Vec3Int
-*/
+/* Calculates the gridcell corresponding to a point. Returns cell id as Vec3Int */
 Vec3Int point2voxel(Scene *scene, Vec3 *point){
     Vec3Int coor = {0, 0, 0};
     Vec3 scaled_p; 
@@ -191,6 +189,16 @@ void test(Scene *scene){
     }
 }
 
+int isInGrid(Scene *scene, Vec3Int *cell){
+    if (cell->x < 0 || cell->y < 0 || cell->z < 0){
+        return 0;
+    }
+    if (cell->x > scene->numboxes.x || cell->y > scene->numboxes.y || cell->z > scene->numboxes.z){
+        return 0;
+    }
+    return 1;
+}
+
 /*casts a ray into the scene. Returns the index of the triangle it intersects.*/
 int castRay(Ray *r, Scene *scene){
     Vec3Int curr_cell = point2voxel(scene, &r->origin);
@@ -207,16 +215,43 @@ int castRay(Ray *r, Scene *scene){
     vec3_floor(&r->origin, &floored);
     vec3_subtract(&ceiled, &r->origin, &ceiled);
     vec3_subtract(&floored, &r->origin, &floored);
-    vec3_div(&ceiled, &r->direction, &ceiled);
-    vec3_div(&floored, &r->direction, &floored);
+    Vec3 tDelta;
+    vec3_inverse(&tDelta, &tDelta);
+    vec3_mul(&ceiled, &tDelta, &ceiled);
+    vec3_mul(&floored, &tDelta, &floored);
     
     Vec3 tMax = ceiled;
     if (tMax.x < 0){ tMax.x = floored.x; }
     if (tMax.y < 0){ tMax.y = floored.y; }
     if (tMax.z < 0){ tMax.z = floored.z; }
-    
-    Vec3 tDelta;
-    
+
+    vec3_abs(&tDelta, &tDelta);
+
+    while (isInGrid(scene, &curr_cell)){
+        // handle cell here:
+        // handleCell(&curr_cell);
+
+        if (tMax.x < tMax.y){
+            if (tMax.x < tMax.z){
+                tMax.x += tDelta.x;
+                curr_cell.x += directions.x;
+            }
+            else{
+                tMax.z += tDelta.z;
+                curr_cell.z += directions.z;
+            }
+        }
+        else{
+            if (tMax.y < tMax.z){
+                tMax.y += tDelta.y;
+                curr_cell.y += directions.y;
+            }
+            else{
+                tMax.z += tDelta.z;
+                curr_cell.z += directions.z;
+            }
+        }
+    }
 }
 
 #endif

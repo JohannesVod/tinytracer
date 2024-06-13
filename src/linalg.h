@@ -50,10 +50,22 @@ void vec3_add(Vec3 *a, Vec3 *b, Vec3 *result) {
     result->z = a->z + b->z;
 }
 
-void vec3_div(Vec3 *a, Vec3 *b, Vec3 *result){
-    result->x = a->x/b->x;
-    result->y = a->y/b->y;
-    result->z = a->z/b->z;
+void vec3_mul(Vec3 *a, Vec3 *b, Vec3 *result) {
+    result->x = a->x * b->x;
+    result->y = a->y * b->y;
+    result->z = a->z * b->z;
+}
+
+void vec3_abs(Vec3 *a, Vec3 *result) {
+    result->x = fabs(a->x);
+    result->y = fabs(a->y);
+    result->z = fabs(a->z);
+}
+
+void vec3_inverse(Vec3 *a, Vec3 *result){
+    result->x = 1/a->x;
+    result->y = 1/a->y;
+    result->z = 1/a->z;
 }
 
 void vec3_copy(Vec3 *v, Vec3 *result) {
