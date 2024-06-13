@@ -216,7 +216,7 @@ int castRay(Ray *r, Scene *scene){
     if (tMax.z < 0){ tMax.z = floored.z; }
     
     Vec3 tDelta;
-
+    
 }
 
 #endif
