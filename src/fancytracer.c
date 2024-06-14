@@ -15,7 +15,7 @@ const char *OBJFILE = "baseScene.obj";
 
 void render_scene(const char *filename, const int width, const int height, const char *objfile) {
     // Measure total execution time
-    double total_start = omp_get_wtime();
+    double preprocess_start = omp_get_wtime();
 
     // Load mesh
     Mesh mesh = {0};
@@ -26,8 +26,12 @@ void render_scene(const char *filename, const int width, const int height, const
     Camera cam = {cam_pos, cam_rot, width, height, FOCAL_LENGTH};
 
     Scene mainScene;
-    buildScene(&cam, mesh.triangles, mesh.triangle_count, &mainScene, 20);
+    buildScene(&cam, mesh.triangles, mesh.triangle_count, &mainScene, 10);
+    double preprocess_end = omp_get_wtime();
+    double prepocess_time = preprocess_end - preprocess_start;
+    printf("Preprocessed in: %f seconds\n", prepocess_time);
 
+    double total_start = omp_get_wtime();
     unsigned char *image = (unsigned char *)malloc(width * height * 3);
     if (!image) {
         printf("Error: Unable to allocate memory for image.\n");
@@ -53,9 +57,13 @@ void render_scene(const char *filename, const int width, const int height, const
                 int color = 0;
                 // Vec3 intersect_point;
                 double ray_intersect_start = omp_get_wtime();
-                int does_intersect = castRay(&cam_ray, &mainScene);
-                if (does_intersect) {
-                    color = 255;
+                Vec3 barycentric;
+                int tria_ind = castRay(&cam_ray, &mainScene, &barycentric);
+                if (tria_ind != -1) {
+                    // color = 255;
+                    Vec3 out_reflect;
+                    ray_intersects_triangle(&cam_ray, &mainScene.triangles[tria_ind], &barycentric);
+                    color = (int)255 * reflect(&cam_ray, &barycentric, &mesh.triangles[tria_ind], &out_reflect);
                 }
                 double ray_intersect_end = omp_get_wtime();
                 thread_ray_intersect_time += (ray_intersect_end - ray_intersect_start);

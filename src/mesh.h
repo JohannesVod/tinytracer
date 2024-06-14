@@ -168,14 +168,6 @@ int get_triangle_intersect(Ray *ray, Mesh *mesh, Vec3 *out){
     return tria_ind;
 }
 
-int ray_intersects_mesh(Ray *ray, Mesh *mesh, Vec3 *out) {
-    for (int i = 0; i < mesh->triangle_count; i++) {
-        if (ray_intersects_triangle(ray, &mesh->triangles[i], out)) {
-            return 1;
-        }
-    }
-    return 0;
-}
 
 int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result) {
     Vec3 cam_coor = {

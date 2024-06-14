@@ -199,21 +199,26 @@ int isInGrid(Scene *scene, Vec3Int *cell){
     return 1;
 }
 
-int handleVoxel(Scene *scene, Voxel *vox, Ray *r){
-    Vec3 res;
+
+inline int handleVoxel(Scene *scene, Voxel *vox, Ray *r, Vec3 *barycentric){
+    float min_t = 1e10;
+    int tria_ind = -1;
+    Vec3 out_temp;
     for (int i = 0; i < vox->trias_count; i++){
         int t_ind = vox->trias[i];
-        Triangle *t = &scene->triangles[t_ind];
-        int does_intersect = ray_intersects_triangle(r, t, &res);
-        if (does_intersect == 1){
-            return 1;
+        if (ray_intersects_triangle(r, &scene->triangles[t_ind], &out_temp)){
+            if (out_temp.x < min_t){
+                tria_ind = t_ind;
+                vec3_copy(&out_temp, barycentric);
+                min_t = out_temp.x;
+            }
         }
     }
-    return 0;
+    return tria_ind;
 }
 
 /*casts a ray into the scene. Returns the index of the triangle it intersects.*/
-int castRay(Ray *ray_inpt, Scene *scene){
+int castRay(Ray *ray_inpt, Scene *scene, Vec3 *barycentric){
     Ray r;
     vec3_copy(&ray_inpt->origin, &r.origin);
     vec3_copy(&ray_inpt->direction, &r.direction);
@@ -248,9 +253,9 @@ int castRay(Ray *ray_inpt, Scene *scene){
         // handle cell here:
         int vox_ind = getVoxelIndex(scene, curr_cell.x, curr_cell.y, curr_cell.z);
         Voxel *vox = &scene->voxels[vox_ind];
-        int res = handleVoxel(scene, vox, ray_inpt);
-        if (res){
-            return 1;
+        int res = handleVoxel(scene, vox, ray_inpt, barycentric);
+        if (res != -1){
+            return res;
         }
         if (tMax.x < tMax.y){
             if (tMax.x < tMax.z){
@@ -273,7 +278,7 @@ int castRay(Ray *ray_inpt, Scene *scene){
             }
         }
     }
-    return 0;
+    return -1;
 }
 
 #endif
