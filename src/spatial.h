@@ -200,7 +200,7 @@ int isInGrid(Scene *scene, Vec3Int *cell){
 }
 
 /*casts a ray into the scene. Returns the index of the triangle it intersects.*/
-int castRay(Ray *r, Scene *scene){
+void castRay(Ray *r, Scene *scene){
     Vec3Int curr_cell = point2voxel(scene, &r->origin);
     vec3_fix(&r->direction);
     
@@ -216,6 +216,7 @@ int castRay(Ray *r, Scene *scene){
     vec3_subtract(&ceiled, &r->origin, &ceiled);
     vec3_subtract(&floored, &r->origin, &floored);
     Vec3 tDelta;
+    vec3_copy(&r->direction, &tDelta);
     vec3_inverse(&tDelta, &tDelta);
     vec3_mul(&ceiled, &tDelta, &ceiled);
     vec3_mul(&floored, &tDelta, &floored);
@@ -230,7 +231,7 @@ int castRay(Ray *r, Scene *scene){
     while (isInGrid(scene, &curr_cell)){
         // handle cell here:
         // handleCell(&curr_cell);
-
+        printf("cell step: %d, %d, %d \n", curr_cell.x, curr_cell.y, curr_cell.z);
         if (tMax.x < tMax.y){
             if (tMax.x < tMax.z){
                 tMax.x += tDelta.x;

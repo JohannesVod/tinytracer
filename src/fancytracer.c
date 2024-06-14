@@ -23,7 +23,9 @@ void render_scene(const char *filename, const int width, const int height, const
 
     Scene mainScene;
     buildScene(mesh.triangles, mesh.triangle_count, &mainScene, 3);
-    test(&mainScene);
+    // test(&mainScene);
+    Ray r = {{-1, -1, -0.5}, {1, 0, 1}};
+    castRay(&r, &mainScene);
 
     Vec3 cam_pos = {0, 0, 5};
     Vec3 cam_rot = {0, 0, 0};
