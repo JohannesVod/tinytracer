@@ -108,8 +108,8 @@ Box get_bbox(Triangle *t){
 void buildScene(Camera *cam, Triangle *triangles, int num_trias, Scene *scene, int desired_boxes){
     scene->triangles = triangles;
     // calculate total bounding box first:
-    vec3_copy(&triangles[0].v1, &cam->position);
-    vec3_copy(&triangles[0].v1, &cam->position);
+    vec3_copy( &cam->position, &scene->bbox.p1);
+    vec3_copy( &cam->position, &scene->bbox.p2);
 
     for (int i = 0; i < num_trias; i++) {
         Triangle t = triangles[i];
@@ -201,12 +201,11 @@ int isInGrid(Scene *scene, Vec3Int *cell){
 
 int handleVoxel(Scene *scene, Voxel *vox, Ray *r){
     Vec3 res;
-    for (int i = 0; i < vox->trias_count; i++)
-    {
+    for (int i = 0; i < vox->trias_count; i++){
         int t_ind = vox->trias[i];
         Triangle *t = &scene->triangles[t_ind];
         int does_intersect = ray_intersects_triangle(r, t, &res);
-        if (does_intersect){
+        if (does_intersect == 1){
             return 1;
         }
     }
@@ -240,17 +239,16 @@ int castRay(Ray *ray_inpt, Scene *scene){
     vec3_mul(&floored, &tDelta, &floored);
     
     Vec3 tMax = ceiled;
-    if (tMax.x < 0){ tMax.x = floored.x; }
-    if (tMax.y < 0){ tMax.y = floored.y; }
-    if (tMax.z < 0){ tMax.z = floored.z; }
+    if (r.direction.x <= 0){ tMax.x = floored.x; }
+    if (r.direction.y <= 0){ tMax.y = floored.y; }
+    if (r.direction.z <= 0){ tMax.z = floored.z; }
 
     vec3_abs(&tDelta, &tDelta);
-
     while (isInGrid(scene, &curr_cell)){
         // handle cell here:
         int vox_ind = getVoxelIndex(scene, curr_cell.x, curr_cell.y, curr_cell.z);
         Voxel *vox = &scene->voxels[vox_ind];
-        int res = handleVoxel(scene, vox, &r);
+        int res = handleVoxel(scene, vox, ray_inpt);
         if (res){
             return 1;
         }

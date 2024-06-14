@@ -26,7 +26,7 @@ void render_scene(const char *filename, const int width, const int height, const
     Camera cam = {cam_pos, cam_rot, width, height, FOCAL_LENGTH};
 
     Scene mainScene;
-    buildScene(&cam, mesh.triangles, mesh.triangle_count, &mainScene, 3);
+    buildScene(&cam, mesh.triangles, mesh.triangle_count, &mainScene, 20);
 
     unsigned char *image = (unsigned char *)malloc(width * height * 3);
     if (!image) {

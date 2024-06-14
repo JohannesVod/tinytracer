@@ -75,15 +75,15 @@ void vec3_copy(Vec3 *v, Vec3 *result) {
 }
 
 void vec3_floor(Vec3 *v, Vec3 *result) {
-    result->x = floorf(v->x);
-    result->y = floorf(v->y);
-    result->z = floorf(v->z);
+    result->x = floor(v->x);
+    result->y = floor(v->y);
+    result->z = floor(v->z);
 }
 
 void vec3_ceil(Vec3 *v, Vec3 *result) {
-    result->x = ceilf(v->x);
-    result->y = ceilf(v->y);
-    result->z = ceilf(v->z);
+    result->x = floor(v->x+1);
+    result->y = floor(v->y+1);
+    result->z = floor(v->z+1);
 }
 
 void vec3_round(Vec3 *v, Vec3 *result) {
