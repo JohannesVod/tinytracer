@@ -105,11 +105,11 @@ Box get_bbox(Triangle *t){
     return bbox;
 }
 
-void buildScene(Triangle *triangles, int num_trias, Scene *scene, int desired_boxes){
+void buildScene(Camera *cam, Triangle *triangles, int num_trias, Scene *scene, int desired_boxes){
     scene->triangles = triangles;
     // calculate total bounding box first:
-    vec3_copy(&triangles[0].v1, &scene->bbox.p1);
-    vec3_copy(&triangles[0].v1, &scene->bbox.p2);
+    vec3_copy(&triangles[0].v1, &cam->position);
+    vec3_copy(&triangles[0].v1, &cam->position);
 
     for (int i = 0; i < num_trias; i++) {
         Triangle t = triangles[i];
@@ -193,30 +193,48 @@ int isInGrid(Scene *scene, Vec3Int *cell){
     if (cell->x < 0 || cell->y < 0 || cell->z < 0){
         return 0;
     }
-    if (cell->x > scene->numboxes.x || cell->y > scene->numboxes.y || cell->z > scene->numboxes.z){
+    if (cell->x >= scene->numboxes.x || cell->y >= scene->numboxes.y || cell->z >= scene->numboxes.z){
         return 0;
     }
     return 1;
 }
 
+int handleVoxel(Scene *scene, Voxel *vox, Ray *r){
+    Vec3 res;
+    for (int i = 0; i < vox->trias_count; i++)
+    {
+        int t_ind = vox->trias[i];
+        Triangle *t = &scene->triangles[t_ind];
+        int does_intersect = ray_intersects_triangle(r, t, &res);
+        if (does_intersect){
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /*casts a ray into the scene. Returns the index of the triangle it intersects.*/
-void castRay(Ray *r, Scene *scene){
-    Vec3Int curr_cell = point2voxel(scene, &r->origin);
-    vec3_fix(&r->direction);
-    
-    Vec3Int directions = {1, 1, 1}; 
-    if (r->direction.x < 0){ directions.x = -1;}
-    if (r->direction.y < 0){ directions.y = -1;}
-    if (r->direction.z < 0){ directions.z = -1;}
+int castRay(Ray *ray_inpt, Scene *scene){
+    Ray r;
+    vec3_copy(&ray_inpt->origin, &r.origin);
+    vec3_copy(&ray_inpt->direction, &r.direction);
+    Vec3Int curr_cell = point2voxel(scene, &ray_inpt->origin);
+    vec3_fix(&r.direction);
+    vec3_subtract(&r.origin, &scene->bbox.p1, &r.origin);
+    vec3_scale(&r.origin, 1/scene->boxsize, &r.origin);
+    Vec3Int directions = {1, 1, 1};
+    if (r.direction.x < 0){ directions.x = -1;}
+    if (r.direction.y < 0){ directions.y = -1;}
+    if (r.direction.z < 0){ directions.z = -1;}
 
     // calculate initial tmax as in http://www.cse.yorku.ca/~amana/research/grid.pdf
     Vec3 ceiled, floored; 
-    vec3_ceil(&r->origin, &ceiled);
-    vec3_floor(&r->origin, &floored);
-    vec3_subtract(&ceiled, &r->origin, &ceiled);
-    vec3_subtract(&floored, &r->origin, &floored);
+    vec3_ceil(&r.origin, &ceiled);
+    vec3_floor(&r.origin, &floored);
+    vec3_subtract(&ceiled, &r.origin, &ceiled);
+    vec3_subtract(&floored, &r.origin, &floored);
     Vec3 tDelta;
-    vec3_copy(&r->direction, &tDelta);
+    vec3_copy(&r.direction, &tDelta);
     vec3_inverse(&tDelta, &tDelta);
     vec3_mul(&ceiled, &tDelta, &ceiled);
     vec3_mul(&floored, &tDelta, &floored);
@@ -230,8 +248,12 @@ void castRay(Ray *r, Scene *scene){
 
     while (isInGrid(scene, &curr_cell)){
         // handle cell here:
-        // handleCell(&curr_cell);
-        printf("cell step: %d, %d, %d \n", curr_cell.x, curr_cell.y, curr_cell.z);
+        int vox_ind = getVoxelIndex(scene, curr_cell.x, curr_cell.y, curr_cell.z);
+        Voxel *vox = &scene->voxels[vox_ind];
+        int res = handleVoxel(scene, vox, &r);
+        if (res){
+            return 1;
+        }
         if (tMax.x < tMax.y){
             if (tMax.x < tMax.z){
                 tMax.x += tDelta.x;
@@ -253,6 +275,7 @@ void castRay(Ray *r, Scene *scene){
             }
         }
     }
+    return 0;
 }
 
 #endif

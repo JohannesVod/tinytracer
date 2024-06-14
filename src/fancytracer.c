@@ -21,15 +21,12 @@ void render_scene(const char *filename, const int width, const int height, const
     Mesh mesh = {0};
     read_obj_file(objfile, &mesh);
 
-    Scene mainScene;
-    buildScene(mesh.triangles, mesh.triangle_count, &mainScene, 3);
-    // test(&mainScene);
-    Ray r = {{-1, -1, -0.5}, {1, 0, 1}};
-    castRay(&r, &mainScene);
-
     Vec3 cam_pos = {0, 0, 5};
     Vec3 cam_rot = {0, 0, 0};
     Camera cam = {cam_pos, cam_rot, width, height, FOCAL_LENGTH};
+
+    Scene mainScene;
+    buildScene(&cam, mesh.triangles, mesh.triangle_count, &mainScene, 3);
 
     unsigned char *image = (unsigned char *)malloc(width * height * 3);
     if (!image) {
@@ -54,14 +51,11 @@ void render_scene(const char *filename, const int width, const int height, const
             for (int x = 0; x < width; x++) {
                 screen2CameraDir(&cam, x, y, &cam_ray.direction);
                 int color = 0;
-                Vec3 intersect_point;
+                // Vec3 intersect_point;
                 double ray_intersect_start = omp_get_wtime();
-                int tria_ind = get_triangle_intersect(&cam_ray, &mesh, &intersect_point);
-                if (tria_ind != -1) {
-                    Vec3 out_reflect;
-                    //color = (tria_ind+1)%255;
-                    // color = (int)40*intersect_point.x;
-                    color = (int)255 * reflect(&cam_ray, &intersect_point, &mesh.triangles[tria_ind], &out_reflect);
+                int does_intersect = castRay(&cam_ray, &mainScene);
+                if (does_intersect) {
+                    color = 255;
                 }
                 double ray_intersect_end = omp_get_wtime();
                 thread_ray_intersect_time += (ray_intersect_end - ray_intersect_start);
