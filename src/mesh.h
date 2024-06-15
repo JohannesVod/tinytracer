@@ -9,12 +9,9 @@
 
 typedef struct {
     Vec3 v1, v2, v3;
-} Triangle;
-
-typedef struct {
-    Vec3 vn1, vn2, vn3;
+    Vec3 vn1, vn2, vn3; // maybe remove later to increase cache locality
     int material;
-} TriangleM; // "triangle more"
+} Triangle;
 
 typedef struct {
     Vec3 p;
@@ -22,9 +19,8 @@ typedef struct {
 } Sphere;
 
 typedef struct {
-    Triangle *trias;
-    TriangleM *triasM;
-    int count;
+    Triangle *triangles;
+    int triangle_count;
 } Triangles;
 
 typedef struct {
@@ -34,6 +30,7 @@ typedef struct {
     float focal_length;
 } Camera;
 
+/* reads object file and saves triangles */
 void read_obj_file(const char *filename, Triangles *mesh) {
     FILE *file = fopen(filename, "r");
     if (!file) {
@@ -49,9 +46,8 @@ void read_obj_file(const char *filename, Triangles *mesh) {
     Vec3 *normals = malloc(normal_capacity * sizeof(Vec3));
     int normal_count = 0;
     int vertex_count = 0;
-    mesh->trias = malloc(triangle_capacity * sizeof(Triangle));
-    mesh->triasM = malloc(triangle_capacity * sizeof(TriangleM));
-    mesh->count = 0;
+    mesh->triangles = malloc(triangle_capacity * sizeof(Triangle));
+    mesh->triangle_count = 0;
 
     while (fgets(line, sizeof(line), file)) {
         if (strncmp(line, "v ", 2) == 0) {
@@ -71,10 +67,9 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             sscanf(line, "vn %f %f %f", &n.x, &n.y, &n.z);
             normals[normal_count++] = n;
         } else if (strncmp(line, "f ", 2) == 0) {
-            if (mesh->count >= triangle_capacity) {
+            if (mesh->triangle_count >= triangle_capacity) {
                 triangle_capacity *= 2;
-                mesh->trias = realloc(mesh->trias, triangle_capacity * sizeof(Triangle));
-                mesh->triasM = realloc(mesh->triasM, triangle_capacity * sizeof(TriangleM));
+                mesh->triangles = realloc(mesh->triangles, triangle_capacity * sizeof(Triangle));
             }
             int v1, v2, v3;
             int vn;
@@ -83,22 +78,19 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             t.v1 = vertices[v1 - 1];
             t.v2 = vertices[v2 - 1];
             t.v3 = vertices[v3 - 1];
-            
+
             Vec3 e1, e2;
             vec3_subtract(&t.v2, &t.v1, &e1);
             vec3_subtract(&t.v3, &t.v1, &e2);
             Vec3 this_normals; vec3_cross(&e1, &e2, &this_normals);
             vec3_normalize(&this_normals, &this_normals);
 
-            TriangleM tM;
-            tM.vn1 = normals[v1 - 1];
-            tM.vn2 = normals[v2 - 1];
-            tM.vn3 = normals[v3 - 1];
-            tM.material = 0;
-
-            mesh->trias[mesh->count] = t;
-            mesh->triasM[mesh->count] = tM;
-            mesh->count++;
+            t.vn1 = normals[v1 - 1];
+            t.vn2 = normals[v2 - 1];
+            t.vn3 = normals[v3 - 1];
+            // t.normal = normals[vn - 1];
+            //calculate_normal(&t);
+            mesh->triangles[mesh->triangle_count++] = t;
         }
     }
     free(vertices);
@@ -106,14 +98,13 @@ void read_obj_file(const char *filename, Triangles *mesh) {
     fclose(file);
 }
 
-void free_triangles(Triangles *triangles) {
-    free(triangles->trias);
-    free(triangles->triasM);
+void free_triangles(Triangles *mesh) {
+    free(mesh->triangles);
 }
 
+/* checks if ray intersects triangle and stores barycentric coordinates in out*/
 int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     const float epsilon = 1e-6;
-    const float epsilon2 = 1e-3;
     Vec3 e1, e2, e2_cross_raydir, b_cross_e1, b;
     vec3_subtract(&triangle->v2, &triangle->v1, &e1);
     vec3_subtract(&triangle->v3, &triangle->v1, &e2);
@@ -126,12 +117,12 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     vec3_subtract(&ray->origin, &triangle->v1, &b);
 
     float u = inv_det * vec3_dot(&e2_cross_raydir, &b); // u
-    if (u < -epsilon2 || u > 1.0+epsilon2) {
+    if (u < 0 || u > 1.0) {
         return 0;
     }
     vec3_cross(&b, &e1, &b_cross_e1);
     float v = inv_det * vec3_dot(&ray->direction, &b_cross_e1); // v
-    if (v < -epsilon2 || v + u > 1.0+epsilon2) {
+    if (v < 0 || v + u > 1.0) {
         return 0;
     }
     float t = inv_det * vec3_dot(&e2, &b_cross_e1); // t
@@ -144,7 +135,8 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     return 0;
 }
 
-float reflect(Ray *ray, Vec3 *barycentric, TriangleM *triangle, Vec3 *out){
+/* calculates reflected ray along triangle normal */
+float reflect(Ray *ray, Vec3 *barycentric, Triangle *triangle, Vec3 *out){
     float u = barycentric->y;
     float v = barycentric->z;
     float w = 1 - u - v;
@@ -162,6 +154,7 @@ float reflect(Ray *ray, Vec3 *barycentric, TriangleM *triangle, Vec3 *out){
     return dot_prod;
 }
 
+/* converts 2d pixel to camera ray */
 int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result) {
     Vec3 cam_coor = {
         (float)screenPos_x / (float)cam->height,

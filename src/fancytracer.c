@@ -18,14 +18,15 @@ void render_scene(const char *filename, const int width, const int height, const
     double preprocess_start = omp_get_wtime();
 
     // Load mesh
-    Triangles triangles = {0};
+    Triangles triangles;
     read_obj_file(objfile, &triangles);
-    Vec3 cam_pos = {0, 0, 5};
+
+    Vec3 cam_pos = {0, 0, 5}; 
     Vec3 cam_rot = {0, 0, 0};
     Camera cam = {cam_pos, cam_rot, width, height, FOCAL_LENGTH};
 
     Scene mainScene;
-    buildScene(&cam, &triangles, &mainScene, 20);
+    buildScene(&cam, triangles.triangles, triangles.triangle_count, &mainScene, 12);
     double preprocess_end = omp_get_wtime();
     double prepocess_time = preprocess_end - preprocess_start;
     printf("Preprocessed in: %f seconds\n", prepocess_time);
@@ -61,8 +62,9 @@ void render_scene(const char *filename, const int width, const int height, const
                 if (tria_ind != -1) {
                     // color = 255;
                     Vec3 out_reflect;
-                    ray_intersects_triangle(&cam_ray, &mainScene.triangles->trias[tria_ind], &barycentric);
-                    color = (int)255 * reflect(&cam_ray, &barycentric, &mainScene.triangles->triasM[tria_ind], &out_reflect);
+                    Triangle *this_tria = &mainScene.triangles[tria_ind];
+                    ray_intersects_triangle(&cam_ray, this_tria, &barycentric);
+                    color = (int)255 * reflect(&cam_ray, &barycentric, this_tria, &out_reflect);
                 }
                 double ray_intersect_end = omp_get_wtime();
                 thread_ray_intersect_time += (ray_intersect_end - ray_intersect_start);

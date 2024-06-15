@@ -35,7 +35,7 @@ typedef struct {
 typedef struct {
     Vec3Int numboxes; // number of boxes on all dimensions
     float boxsize;
-    Triangles *triangles;
+    Triangle *triangles;
     Voxel *voxels; // cells
     Box bbox;
 } Scene;
@@ -55,7 +55,7 @@ void freeScene(Scene *scene){
         }
     }
     free(scene->voxels);
-    free_triangles(scene->triangles);
+    free(scene->triangles);
 }
 
 void point2floor(Vec3 *p, float boxsize){
@@ -105,14 +105,14 @@ Box get_bbox(Triangle *t){
     return bbox;
 }
 
-void buildScene(Camera *cam, Triangles *triangles, Scene *scene, int desired_boxes){
+void buildScene(Camera *cam, Triangle *triangles, int num_trias, Scene *scene, int desired_boxes){
     scene->triangles = triangles;
     // calculate total bounding box first:
     vec3_copy( &cam->position, &scene->bbox.p1);
     vec3_copy( &cam->position, &scene->bbox.p2);
 
-    for (int i = 0; i < triangles->count; i++) {
-        Triangle t = triangles->trias[i];
+    for (int i = 0; i < num_trias; i++) {
+        Triangle t = triangles[i];
 
         // Check each vertex of the triangle
         Vec3 vertices[3] = {t.v1, t.v2, t.v3};
@@ -155,8 +155,8 @@ void buildScene(Camera *cam, Triangles *triangles, Scene *scene, int desired_box
         }
     }
 
-    for (int i = 0; i < triangles->count; i++) {
-        Triangle t = triangles->trias[i];
+    for (int i = 0; i < num_trias; i++) {
+        Triangle t = triangles[i];
         Box bbox = get_bbox(&t);
         Vec3Int coor_1 = point2voxel(scene, &bbox.p1);
         Vec3Int coor_2 = point2voxel(scene, &bbox.p2);
@@ -206,7 +206,7 @@ int handleVoxel(Scene *scene, Voxel *vox, Ray *r, Vec3 *barycentric){
     Vec3 out_temp;
     for (int i = 0; i < vox->trias_count; i++){
         int t_ind = vox->trias[i];
-        if (ray_intersects_triangle(r, &scene->triangles->trias[t_ind], &out_temp)){
+        if (ray_intersects_triangle(r, &scene->triangles[t_ind], &out_temp)){
             if (out_temp.x < min_t){
                 tria_ind = t_ind;
                 vec3_copy(&out_temp, barycentric);
