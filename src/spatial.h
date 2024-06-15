@@ -172,23 +172,6 @@ void buildScene(Camera *cam, Triangle *triangles, int num_trias, Scene *scene, i
     }
 }
 
-void test(Scene *scene){
-    for (int x_i = 0; x_i < scene->numboxes.x; x_i++){
-        for (int y_i = 0; y_i < scene->numboxes.y; y_i++){
-            for (int z_i = 0; z_i < scene->numboxes.z; z_i++){
-                int arr_ind = getVoxelIndex(scene, x_i, y_i, z_i);
-                Voxel *vox = &scene->voxels[arr_ind];
-                float box_pos_x = scene->bbox.p1.x + scene->boxsize*x_i;
-                float box_pos_y = scene->bbox.p1.y + scene->boxsize*y_i;
-                float box_pos_z = scene->bbox.p1.z + scene->boxsize*z_i;
-                if (vox->trias_count != 0){
-                    printf("%f, %f, %f|triangle ind: %d\n", box_pos_x, box_pos_y, box_pos_z, vox->trias[0]);
-                }
-            }
-        }
-    }
-}
-
 int isInGrid(Scene *scene, Vec3Int *cell){
     if (cell->x < 0 || cell->y < 0 || cell->z < 0){
         return 0;
