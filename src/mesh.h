@@ -9,9 +9,12 @@
 
 typedef struct {
     Vec3 v1, v2, v3;
-    Vec3 vn1, vn2, vn3; // maybe remove later to increase cache locality
-    int material;
 } Triangle;
+
+typedef struct {
+    Vec3 vn1, vn2, vn3;
+    int material;
+} TriangleM; // "triangle more"
 
 typedef struct {
     Vec3 p;
@@ -19,9 +22,10 @@ typedef struct {
 } Sphere;
 
 typedef struct {
-    Triangle *triangles;
-    int triangle_count;
-} Mesh;
+    Triangle *trias;
+    TriangleM *triasM;
+    int count;
+} Triangles;
 
 typedef struct {
     Vec3 position, rotation;
@@ -30,7 +34,7 @@ typedef struct {
     float focal_length;
 } Camera;
 
-void read_obj_file(const char *filename, Mesh *mesh) {
+void read_obj_file(const char *filename, Triangles *mesh) {
     FILE *file = fopen(filename, "r");
     if (!file) {
         perror("Error opening file");
@@ -45,8 +49,9 @@ void read_obj_file(const char *filename, Mesh *mesh) {
     Vec3 *normals = malloc(normal_capacity * sizeof(Vec3));
     int normal_count = 0;
     int vertex_count = 0;
-    mesh->triangles = malloc(triangle_capacity * sizeof(Triangle));
-    mesh->triangle_count = 0;
+    mesh->trias = malloc(triangle_capacity * sizeof(Triangle));
+    mesh->triasM = malloc(triangle_capacity * sizeof(TriangleM));
+    mesh->count = 0;
 
     while (fgets(line, sizeof(line), file)) {
         if (strncmp(line, "v ", 2) == 0) {
@@ -66,9 +71,10 @@ void read_obj_file(const char *filename, Mesh *mesh) {
             sscanf(line, "vn %f %f %f", &n.x, &n.y, &n.z);
             normals[normal_count++] = n;
         } else if (strncmp(line, "f ", 2) == 0) {
-            if (mesh->triangle_count >= triangle_capacity) {
+            if (mesh->count >= triangle_capacity) {
                 triangle_capacity *= 2;
-                mesh->triangles = realloc(mesh->triangles, triangle_capacity * sizeof(Triangle));
+                mesh->trias = realloc(mesh->trias, triangle_capacity * sizeof(Triangle));
+                mesh->triasM = realloc(mesh->triasM, triangle_capacity * sizeof(TriangleM));
             }
             int v1, v2, v3;
             int vn;
@@ -77,19 +83,22 @@ void read_obj_file(const char *filename, Mesh *mesh) {
             t.v1 = vertices[v1 - 1];
             t.v2 = vertices[v2 - 1];
             t.v3 = vertices[v3 - 1];
-
+            
             Vec3 e1, e2;
             vec3_subtract(&t.v2, &t.v1, &e1);
             vec3_subtract(&t.v3, &t.v1, &e2);
             Vec3 this_normals; vec3_cross(&e1, &e2, &this_normals);
             vec3_normalize(&this_normals, &this_normals);
 
-            t.vn1 = normals[v1 - 1];
-            t.vn2 = normals[v2 - 1];
-            t.vn3 = normals[v3 - 1];
-            // t.normal = normals[vn - 1];
-            //calculate_normal(&t);
-            mesh->triangles[mesh->triangle_count++] = t;
+            TriangleM tM;
+            tM.vn1 = normals[v1 - 1];
+            tM.vn2 = normals[v2 - 1];
+            tM.vn3 = normals[v3 - 1];
+            tM.material = 0;
+
+            mesh->trias[mesh->count] = t;
+            mesh->triasM[mesh->count] = tM;
+            mesh->count++;
         }
     }
     free(vertices);
@@ -97,8 +106,9 @@ void read_obj_file(const char *filename, Mesh *mesh) {
     fclose(file);
 }
 
-void free_mesh(Mesh *mesh) {
-    free(mesh->triangles);
+void free_triangles(Triangles *triangles) {
+    free(triangles->trias);
+    free(triangles->triasM);
 }
 
 int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
@@ -134,7 +144,7 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     return 0;
 }
 
-float reflect(Ray *ray, Vec3 *barycentric, Triangle *triangle, Vec3 *out){
+float reflect(Ray *ray, Vec3 *barycentric, TriangleM *triangle, Vec3 *out){
     float u = barycentric->y;
     float v = barycentric->z;
     float w = 1 - u - v;
@@ -151,23 +161,6 @@ float reflect(Ray *ray, Vec3 *barycentric, Triangle *triangle, Vec3 *out){
     vec3_add(&ray->direction, out, out);
     return dot_prod;
 }
-
-int get_triangle_intersect(Ray *ray, Mesh *mesh, Vec3 *out){
-    float min_t = 1e10;
-    int tria_ind = -1;
-    Vec3 out_temp;
-    for (int i = 0; i < mesh->triangle_count; i++) {
-        if (ray_intersects_triangle(ray, &mesh->triangles[i], &out_temp)) {
-            if (out_temp.x < min_t){
-                vec3_copy(&out_temp, out);
-                min_t = out_temp.x;
-                tria_ind = i;
-            }
-        }
-    }
-    return tria_ind;
-}
-
 
 int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result) {
     Vec3 cam_coor = {
