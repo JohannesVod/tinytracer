@@ -1,6 +1,7 @@
 #ifndef SPATIAL_H
 #define SPATIAL_H
 #include "mesh.h"
+#include "materials.h"
 #include <math.h>
 
 typedef struct {
@@ -35,7 +36,7 @@ typedef struct {
 typedef struct {
     Vec3Int numboxes; // number of boxes on all dimensions
     float boxsize;
-    Triangle *triangles;
+    Triangles *triangles;
     Voxel *voxels; // cells
     Box bbox;
 } Scene;
@@ -55,7 +56,7 @@ void freeScene(Scene *scene){
         }
     }
     free(scene->voxels);
-    free(scene->triangles);
+    free_triangles(scene->triangles);
 }
 
 void point2floor(Vec3 *p, float boxsize){
@@ -105,14 +106,14 @@ Box get_bbox(Triangle *t){
     return bbox;
 }
 
-void buildScene(Camera *cam, Triangle *triangles, int num_trias, Scene *scene, int desired_boxes){
-    scene->triangles = triangles;
+void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
+    scene->triangles = trias;
     // calculate total bounding box first:
     vec3_copy( &cam->position, &scene->bbox.p1);
     vec3_copy( &cam->position, &scene->bbox.p2);
 
-    for (int i = 0; i < num_trias; i++) {
-        Triangle t = triangles[i];
+    for (int i = 0; i < trias->count; i++) {
+        Triangle t = trias->triangles[i];
 
         // Check each vertex of the triangle
         Vec3 vertices[3] = {t.v1, t.v2, t.v3};
@@ -139,7 +140,8 @@ void buildScene(Camera *cam, Triangle *triangles, int num_trias, Scene *scene, i
     vec3_round(&scaled, &scaled);
     // calculate number of boxes per dimension:
     vec3_2int(&scaled, &scene->numboxes);
-    scene->voxels = (Voxel *)malloc(scene->numboxes.x*scene->numboxes.y*scene->numboxes.z * sizeof(Voxel));
+    int voxel_count = scene->numboxes.x*scene->numboxes.y*scene->numboxes.z;
+    scene->voxels = (Voxel *)malloc(voxel_count * sizeof(Voxel));
     // initialize voxels:
     for (int x_i = 0; x_i < scene->numboxes.x; x_i++){
         for (int y_i = 0; y_i < scene->numboxes.y; y_i++){
@@ -155,8 +157,8 @@ void buildScene(Camera *cam, Triangle *triangles, int num_trias, Scene *scene, i
         }
     }
 
-    for (int i = 0; i < num_trias; i++) {
-        Triangle t = triangles[i];
+    for (int i = 0; i < trias->count; i++) {
+        Triangle t = trias->triangles[i];
         Box bbox = get_bbox(&t);
         Vec3Int coor_1 = point2voxel(scene, &bbox.p1);
         Vec3Int coor_2 = point2voxel(scene, &bbox.p2);
@@ -189,7 +191,7 @@ int handleVoxel(Scene *scene, Voxel *vox, Ray *r, Vec3 *barycentric){
     Vec3 out_temp;
     for (int i = 0; i < vox->trias_count; i++){
         int t_ind = vox->trias[i];
-        if (ray_intersects_triangle(r, &scene->triangles[t_ind], &out_temp)){
+        if (ray_intersects_triangle(r, &scene->triangles->triangles[t_ind], &out_temp)){
             if (out_temp.x < min_t){
                 tria_ind = t_ind;
                 vec3_copy(&out_temp, barycentric);

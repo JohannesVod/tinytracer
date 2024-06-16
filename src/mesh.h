@@ -20,7 +20,7 @@ typedef struct {
 
 typedef struct {
     Triangle *triangles;
-    int triangle_count;
+    int count;
 } Triangles;
 
 typedef struct {
@@ -47,7 +47,7 @@ void read_obj_file(const char *filename, Triangles *mesh) {
     int normal_count = 0;
     int vertex_count = 0;
     mesh->triangles = malloc(triangle_capacity * sizeof(Triangle));
-    mesh->triangle_count = 0;
+    mesh->count = 0;
 
     while (fgets(line, sizeof(line), file)) {
         if (strncmp(line, "v ", 2) == 0) {
@@ -67,7 +67,7 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             sscanf(line, "vn %f %f %f", &n.x, &n.y, &n.z);
             normals[normal_count++] = n;
         } else if (strncmp(line, "f ", 2) == 0) {
-            if (mesh->triangle_count >= triangle_capacity) {
+            if (mesh->count >= triangle_capacity) {
                 triangle_capacity *= 2;
                 mesh->triangles = realloc(mesh->triangles, triangle_capacity * sizeof(Triangle));
             }
@@ -90,7 +90,7 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             t.vn3 = normals[v3 - 1];
             // t.normal = normals[vn - 1];
             //calculate_normal(&t);
-            mesh->triangles[mesh->triangle_count++] = t;
+            mesh->triangles[mesh->count++] = t;
         }
     }
     free(vertices);
