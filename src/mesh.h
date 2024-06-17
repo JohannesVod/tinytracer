@@ -10,6 +10,7 @@
 typedef struct {
     Vec3 v1, v2, v3;
     Vec3 vn1, vn2, vn3; // maybe remove later to increase cache locality
+    Vec2 vt1, vt2, vt3; // textures coordinates
     int material;
 } Triangle;
 
@@ -42,10 +43,14 @@ void read_obj_file(const char *filename, Triangles *mesh) {
     int vertex_capacity = 10;
     int normal_capacity = 10;
     int triangle_capacity = 10;
+    int texcoors_capacity = 10;
     Vec3 *vertices = malloc(vertex_capacity * sizeof(Vec3));
     Vec3 *normals = malloc(normal_capacity * sizeof(Vec3));
+    Vec2 *texCoors = malloc(texcoors_capacity * sizeof(Vec2));
+
     int normal_count = 0;
     int vertex_count = 0;
+    int texcoors_count = 0;
     mesh->triangles = malloc(triangle_capacity * sizeof(Triangle));
     mesh->count = 0;
 
@@ -58,6 +63,14 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             Vec3 v;
             sscanf(line, "v %f %f %f", &v.x, &v.y, &v.z);
             vertices[vertex_count++] = v;
+        } else if (strncmp(line, "vt ", 3) == 0) {
+            if (texcoors_count >= texcoors_capacity) {
+                texcoors_capacity *= 2;
+                texCoors = realloc(texCoors, texcoors_capacity * sizeof(Vec2));
+            }
+            Vec2 vt;
+            sscanf(line, "vt %f %f", &vt.x, &vt.y);
+            texCoors[texcoors_count++] = vt;
         } else if (strncmp(line, "vn ", 3) == 0) {
             if (normal_count >= normal_capacity) {
                 normal_capacity *= 2;
@@ -72,24 +85,23 @@ void read_obj_file(const char *filename, Triangles *mesh) {
                 mesh->triangles = realloc(mesh->triangles, triangle_capacity * sizeof(Triangle));
             }
             int v1, v2, v3;
-            int vn;
-            sscanf(line, "f %d/%*d/%*d %d/%*d/%*d %d/%*d/%d", &v1, &v2, &v3, &vn);
+            int vt1, vt2, vt3;
+            int vn1, vn2, vn3;
+            sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d", &v1, &vt1, &vn1, &v2, &vt2, &vn2, &v3, &vt3, &vn3);
+
             Triangle t;
             t.v1 = vertices[v1 - 1];
             t.v2 = vertices[v2 - 1];
             t.v3 = vertices[v3 - 1];
 
-            Vec3 e1, e2;
-            vec3_subtract(&t.v2, &t.v1, &e1);
-            vec3_subtract(&t.v3, &t.v1, &e2);
-            Vec3 this_normals; vec3_cross(&e1, &e2, &this_normals);
-            vec3_normalize(&this_normals, &this_normals);
+            t.vt1 = texCoors[vt1 - 1];
+            t.vt2 = texCoors[vt2 - 1];
+            t.vt3 = texCoors[vt3 - 1];
 
-            t.vn1 = normals[v1 - 1];
-            t.vn2 = normals[v2 - 1];
-            t.vn3 = normals[v3 - 1];
-            // t.normal = normals[vn - 1];
-            //calculate_normal(&t);
+            t.vn1 = normals[vn1 - 1];
+            t.vn2 = normals[vn2 - 1];
+            t.vn3 = normals[vn3 - 1];
+
             mesh->triangles[mesh->count++] = t;
         }
     }

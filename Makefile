@@ -28,8 +28,8 @@ run: all
 debug: CFLAGS += -g -O0
 debug: clean dirs fancytracer
 
-fast: CFLAGS += -O2
-fast: dirs fancytracer
+fast: CFLAGS += -O0
+fast: clean dirs fancytracer
 
 # release: CFLAGS += -O3
 # release: clean dirs fancytracer

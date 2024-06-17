@@ -7,12 +7,12 @@ typedef struct {
 } Vec3;
 
 typedef struct {
-    int x, y, z;
-} Vec3Int;
-
-typedef struct {
     float x, y;
 } Vec2;
+
+typedef struct {
+    int x, y, z;
+} Vec3Int;
 
 typedef struct {
     Vec3 origin, normal;

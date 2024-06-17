@@ -50,15 +50,29 @@ if obj and obj.type == 'MESH':
             normal = v.normal
             file.write(f"vn {normal.x:.6f} {normal.y:.6f} {normal.z:.6f}\n")
         
+        # Write the UV coordinates of all vertices in the mesh
+        uv_layer = temp_mesh.uv_layers.active.data if temp_mesh.uv_layers.active else None
+        if uv_layer:
+            uv_dict = {loop.vertex_index: uv_layer[loop.index].uv for loop in temp_mesh.loops}
+            for v in temp_mesh.vertices:
+                uv = uv_dict.get(v.index)
+                if uv:
+                    file.write(f"vt {uv.x:.6f} {uv.y:.6f}\n")
+                else:
+                    file.write(f"vt 0.000000 0.000000\n")  # Default UV coordinates if none found
+        
         # Write the faces (triangles) in the mesh
         for poly in temp_mesh.polygons:
             face_str = "f"
             for loop_index in poly.loop_indices:
                 loop = temp_mesh.loops[loop_index]
                 vertex_index = loop.vertex_index + 1  # OBJ format indices are 1-based
-                uv_index = loop_index + 1  # Same for texture indices
+                uv_index = loop_index + 1 if uv_layer else 0  # Same for texture indices
                 normal_index = vertex_index  # Assume normal indices match vertex indices
-                face_str += f" {vertex_index}/{uv_index}/{normal_index}"
+                if uv_layer:
+                    face_str += f" {vertex_index}/{uv_index}/{normal_index}"
+                else:
+                    face_str += f" {vertex_index}//{normal_index}"
             file.write(face_str + "\n")
     
     # Remove the temporary object from the scene

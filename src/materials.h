@@ -51,10 +51,6 @@ Texture load_texture(const char *filename) {
     return texture;
 }
 
-Pixel getPixelFromCoor(Texture *tex, float x, float y){
-    
-}
-
 // Function to free a loaded texture
 void free_texture(Texture *texture) {
     if (texture->pixels) {
