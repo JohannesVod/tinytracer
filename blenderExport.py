@@ -68,7 +68,7 @@ if obj and obj.type == 'MESH':
                 loop = temp_mesh.loops[loop_index]
                 vertex_index = loop.vertex_index + 1  # OBJ format indices are 1-based
                 uv_index = loop_index + 1 if uv_layer else 0  # Same for texture indices
-                normal_index = vertex_index  # Assume normal indices match vertex indices
+                normal_index = loop.vertex_index + 1  # Correctly match the normal index to vertex index
                 if uv_layer:
                     face_str += f" {vertex_index}/{uv_index}/{normal_index}"
                 else:
