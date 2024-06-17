@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "spatial.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -49,6 +50,46 @@ Texture load_texture(const char *filename) {
     // Free original image data
     stbi_image_free(data);
     return texture;
+}
+
+/* Gets pixel from texture coordinate */
+Pixel GetPixel(Vec2 *vc, Texture *tex){
+    int x = ((int) (vc->x*tex->width))%tex->width;
+    int y = (tex->height - (int) (vc->y*tex->height))%tex->height;
+    return tex->pixels[y*tex->width+x];
+}
+
+/* Gets pixel from barycentric coordinates */
+Pixel GetPixelFromTria(Texture *tex, Triangle *t, Vec3 *barycentric){
+    Vec2 e1, e2;
+    vec2_subtract(&t->vt2, &t->vt1, &e1);
+    vec2_subtract(&t->vt3, &t->vt1, &e2);
+    vec2_scale(&e1, barycentric->y, &e1);
+    vec2_scale(&e2, barycentric->z, &e2);
+    Vec2 coor;
+    vec2_copy(&t->vt1, &coor);
+    vec2_add(&coor, &e1, &coor);
+    vec2_add(&coor, &e2, &coor);
+    return GetPixel(&coor, tex);
+}
+
+/* calculates reflected ray along triangle normal */
+Pixel reflect(Ray *ray, Vec3 *barycentric, Triangle *triangle, Vec3 *out, Texture *tex){
+    // float u = barycentric->y;
+    // float v = barycentric->z;
+    // float w = 1 - u - v;
+    // Vec3 normal;
+    // Vec3 vn1, vn2, vn3;
+    // vec3_scale(&triangle->vn1, w, &vn1);
+    // vec3_scale(&triangle->vn2, u, &vn2);
+    // vec3_scale(&triangle->vn3, v, &vn3);
+    // vec3_add(&vn1, &vn2, &normal);
+    // vec3_add(&normal, &vn3, &normal);
+    // vec3_normalize(&normal, &normal); // needed?
+    // float dot_prod = vec3_dot(&ray->direction, &normal);
+    // vec3_scale(&normal, -2*dot_prod, out);
+    // vec3_add(&ray->direction, out, out);
+    return GetPixelFromTria(tex, triangle, barycentric);
 }
 
 // Function to free a loaded texture

@@ -70,6 +70,7 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             }
             Vec2 vt;
             sscanf(line, "vt %f %f", &vt.x, &vt.y);
+            printf("%f, %f\n", vt.x, vt.y);
             texCoors[texcoors_count++] = vt;
         } else if (strncmp(line, "vn ", 3) == 0) {
             if (normal_count >= normal_capacity) {
@@ -90,23 +91,24 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d", &v1, &vt1, &vn1, &v2, &vt2, &vn2, &v3, &vt3, &vn3);
 
             Triangle t;
-            t.v1 = vertices[v1 - 1];
-            t.v2 = vertices[v2 - 1];
-            t.v3 = vertices[v3 - 1];
+            vec3_copy(&vertices[v1 - 1], &t.v1);
+            vec3_copy(&vertices[v2 - 1], &t.v2);
+            vec3_copy(&vertices[v3 - 1], &t.v3);
 
-            t.vt1 = texCoors[vt1 - 1];
-            t.vt2 = texCoors[vt2 - 1];
-            t.vt3 = texCoors[vt3 - 1];
+            vec2_copy(&texCoors[vt1 - 1], &t.vt1);
+            vec2_copy(&texCoors[vt2 - 1], &t.vt2);
+            vec2_copy(&texCoors[vt3 - 1], &t.vt3);
 
-            t.vn1 = normals[vn1 - 1];
-            t.vn2 = normals[vn2 - 1];
-            t.vn3 = normals[vn3 - 1];
+            vec3_copy(&normals[vn1 - 1], &t.vn1);
+            vec3_copy(&normals[vn2 - 1], &t.vn2);
+            vec3_copy(&normals[vn3 - 1], &t.vn3);
 
             mesh->triangles[mesh->count++] = t;
         }
     }
     free(vertices);
     free(normals);
+    free(texCoors);
     fclose(file);
 }
 
@@ -145,25 +147,6 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
         return 1;
     }
     return 0;
-}
-
-/* calculates reflected ray along triangle normal */
-float reflect(Ray *ray, Vec3 *barycentric, Triangle *triangle, Vec3 *out){
-    float u = barycentric->y;
-    float v = barycentric->z;
-    float w = 1 - u - v;
-    Vec3 normal;
-    Vec3 vn1, vn2, vn3; 
-    vec3_scale(&triangle->vn1, w, &vn1);
-    vec3_scale(&triangle->vn2, u, &vn2);
-    vec3_scale(&triangle->vn3, v, &vn3);
-    vec3_add(&vn1, &vn2, &normal);
-    vec3_add(&normal, &vn3, &normal);
-    vec3_normalize(&normal, &normal); // needed?
-    float dot_prod = vec3_dot(&ray->direction, &normal);
-    vec3_scale(&normal, -2*dot_prod, out);
-    vec3_add(&ray->direction, out, out);
-    return dot_prod;
 }
 
 /* converts 2d pixel to camera ray */

@@ -1,7 +1,6 @@
 #ifndef SPATIAL_H
 #define SPATIAL_H
 #include "mesh.h"
-#include "materials.h"
 #include <math.h>
 
 typedef struct {

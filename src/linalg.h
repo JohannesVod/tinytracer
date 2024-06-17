@@ -28,6 +28,26 @@ void vec3_subtract(Vec3 *a, Vec3 *b, Vec3 *result) {
     result->z = a->z - b->z;
 }
 
+void vec2_subtract(Vec2 *a, Vec2 *b, Vec2 *result) {
+    result->x = a->x - b->x;
+    result->y = a->y - b->y;
+}
+
+void vec2_add(Vec2 *a, Vec2 *b, Vec2 *result) {
+    result->x = a->x + b->x;
+    result->y = a->y + b->y;
+}
+
+void vec2_scale(Vec2 *a, float t, Vec2 *result) {
+    result->x = a->x * t;
+    result->y = a->y * t;
+}
+
+void vec2_copy(Vec2 *v, Vec2 *result) {
+    result->x = v->x;
+    result->y = v->y;
+}
+
 void vec3_cross(Vec3 *a, Vec3 *b, Vec3 *result) {
     result->x = a->y * b->z - a->z * b->y;
     result->y = a->z * b->x - a->x * b->z;

@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <omp.h> // Include the OpenMP header
-#include "spatial.h"
+#include "materials.h"
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
@@ -19,6 +20,7 @@ void render_scene(const char *filename, const int width, const int height, const
     // Load mesh
     Triangles triangles;
     read_obj_file(objfile, &triangles);
+    Texture tex = load_texture("testTex.png");
 
     Vec3 cam_pos = {0, 0, 5}; 
     Vec3 cam_rot = {0, 0, 0};
@@ -53,25 +55,32 @@ void render_scene(const char *filename, const int width, const int height, const
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 screen2CameraDir(&cam, x, y, &cam_ray.direction);
-                int color = 0;
                 // Vec3 intersect_point;
                 double ray_intersect_start = omp_get_wtime();
                 Vec3 barycentric;
                 int tria_ind = castRay(&cam_ray, &mainScene, &barycentric);
+                int r, g, b;
+                r = 0;
+                g = 0;
+                b = 0;
                 if (tria_ind != -1) {
                     // color = 255;
                     Vec3 out_reflect;
                     Triangle *this_tria = &mainScene.triangles->triangles[tria_ind];
                     ray_intersects_triangle(&cam_ray, this_tria, &barycentric);
-                    color = (int)255 * reflect(&cam_ray, &barycentric, this_tria, &out_reflect);
+                    Pixel pix = reflect(&cam_ray, &barycentric, this_tria, &out_reflect, &tex);
+                    r = pix.r;
+                    g = pix.g;
+                    b = pix.b;
                 }
+
                 double ray_intersect_end = omp_get_wtime();
                 thread_ray_intersect_time += (ray_intersect_end - ray_intersect_start);
                 thread_num_tests++;
                 int this_y = height - y - 1;
-                image[(this_y * width + x) * 3] = (unsigned char)(color);                  // Blue
-                image[(this_y * width + x) * 3 + 1] = (unsigned char)(color);              // Green
-                image[(this_y * width + x) * 3 + 2] = (unsigned char)(color);              // Red
+                image[(this_y * width + x) * 3] = (unsigned char)(r);                  // Red
+                image[(this_y * width + x) * 3 + 1] = (unsigned char)(g);              // Green
+                image[(this_y * width + x) * 3 + 2] = (unsigned char)(b);              // Blue
             }
         }
 
