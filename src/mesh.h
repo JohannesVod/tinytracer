@@ -70,7 +70,6 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             }
             Vec2 vt;
             sscanf(line, "vt %f %f", &vt.x, &vt.y);
-            printf("%f, %f\n", vt.x, vt.y);
             texCoors[texcoors_count++] = vt;
         } else if (strncmp(line, "vn ", 3) == 0) {
             if (normal_count >= normal_capacity) {
