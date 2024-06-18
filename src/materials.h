@@ -74,11 +74,12 @@ Pixel GetPixelFromTria(Texture *tex, Triangle *t, Vec3 *barycentric){
     return GetPixel(&coor, tex);
 }
 
-/* calculates reflected ray along triangle normal */
 Pixel reflect(Ray *ray, Vec3 *barycentric, Triangle *triangle, Vec3 *out, Texture *tex){
     float u = barycentric->y;
     float v = barycentric->z;
     float w = 1 - u - v;
+
+    // Interpolating the normal using barycentric coordinates
     Vec3 normal;
     Vec3 vn1, vn2, vn3;
     vec3_scale(&triangle->vn1, w, &vn1);
@@ -86,11 +87,19 @@ Pixel reflect(Ray *ray, Vec3 *barycentric, Triangle *triangle, Vec3 *out, Textur
     vec3_scale(&triangle->vn3, v, &vn3);
     vec3_add(&vn1, &vn2, &normal);
     vec3_add(&normal, &vn3, &normal);
-    vec3_normalize(&normal, &normal); // needed?
+    vec3_normalize(&normal, &normal);
+
+    // Reflect the ray direction along the normal
     float dot_prod = vec3_dot(&ray->direction, &normal);
-    vec3_scale(&normal, -2*dot_prod, out);
+    vec3_scale(&normal, -2 * dot_prod, out);
     vec3_add(&ray->direction, out, out);
-    out; 
+
+    // Map the reflection vector to RGB
+    Pixel res;
+    res.r = (unsigned char)(255 * (out->x * 0.5 + 0.5)); // Map [-1, 1] to [0, 255]
+    res.g = (unsigned char)(255 * (out->y * 0.5 + 0.5));
+    res.b = (unsigned char)(255 * (out->z * 0.5 + 0.5));
+    return res;
 }
 
 // Function to free a loaded texture

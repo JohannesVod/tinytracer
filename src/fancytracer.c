@@ -10,7 +10,7 @@
 const float FOCAL_LENGTH = 2.0f;
 const int WIDTH = 800;
 const int HEIGHT = 400;
-const int SAMPLES = 2;
+const int SAMPLES = 1;
 const char *FILENAME = "output.png";
 const char *OBJFILE = "baseScene.obj";
 
@@ -24,7 +24,7 @@ void render_scene(const char *filename, const int width, const int height, const
     read_obj_file(objfile, &triangles);
     Texture tex = load_texture("testTex.png");
 
-    Vec3 cam_pos = {0, 0, 5}; 
+    Vec3 cam_pos = {0, 0, 500}; 
     Vec3 cam_rot = {0, 0, 0};
     Camera cam = {cam_pos, cam_rot, width, height, FOCAL_LENGTH};
 
@@ -61,7 +61,6 @@ void render_scene(const char *filename, const int width, const int height, const
                 float r = 0;
                 float g = 0;
                 float b = 0;
-                float a = 255;
                 for (size_t sample = 0; sample < SAMPLES; sample++)
                 {
                     screen2CameraDir(&cam, x, y, &cam_ray.direction);
