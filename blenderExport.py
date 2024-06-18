@@ -7,4 +7,5 @@ output_file_path = r"\\wsl.localhost\Arch\home\NiceGuySaysHi\projects\raytracer\
 bpy.ops.wm.obj_export(filepath=output_file_path,
                         export_materials=False,
                         forward_axis='Y',  # Forward axis
+                        export_triangulated_mesh=True,
                         up_axis='Z')

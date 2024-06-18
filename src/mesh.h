@@ -150,7 +150,7 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
 
 float randFloat(){
     float x = (float)rand()/(float)(RAND_MAX);
-    return 0;
+    return x;
 }
 
 /* converts 2d pixel to camera ray */

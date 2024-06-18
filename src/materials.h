@@ -70,26 +70,27 @@ Pixel GetPixelFromTria(Texture *tex, Triangle *t, Vec3 *barycentric){
     vec2_copy(&t->vt1, &coor);
     vec2_add(&coor, &e1, &coor);
     vec2_add(&coor, &e2, &coor);
+
     return GetPixel(&coor, tex);
 }
 
 /* calculates reflected ray along triangle normal */
 Pixel reflect(Ray *ray, Vec3 *barycentric, Triangle *triangle, Vec3 *out, Texture *tex){
-    // float u = barycentric->y;
-    // float v = barycentric->z;
-    // float w = 1 - u - v;
-    // Vec3 normal;
-    // Vec3 vn1, vn2, vn3;
-    // vec3_scale(&triangle->vn1, w, &vn1);
-    // vec3_scale(&triangle->vn2, u, &vn2);
-    // vec3_scale(&triangle->vn3, v, &vn3);
-    // vec3_add(&vn1, &vn2, &normal);
-    // vec3_add(&normal, &vn3, &normal);
-    // vec3_normalize(&normal, &normal); // needed?
-    // float dot_prod = vec3_dot(&ray->direction, &normal);
-    // vec3_scale(&normal, -2*dot_prod, out);
-    // vec3_add(&ray->direction, out, out);
-    return GetPixelFromTria(tex, triangle, barycentric);
+    float u = barycentric->y;
+    float v = barycentric->z;
+    float w = 1 - u - v;
+    Vec3 normal;
+    Vec3 vn1, vn2, vn3;
+    vec3_scale(&triangle->vn1, w, &vn1);
+    vec3_scale(&triangle->vn2, u, &vn2);
+    vec3_scale(&triangle->vn3, v, &vn3);
+    vec3_add(&vn1, &vn2, &normal);
+    vec3_add(&normal, &vn3, &normal);
+    vec3_normalize(&normal, &normal); // needed?
+    float dot_prod = vec3_dot(&ray->direction, &normal);
+    vec3_scale(&normal, -2*dot_prod, out);
+    vec3_add(&ray->direction, out, out);
+    out; 
 }
 
 // Function to free a loaded texture
