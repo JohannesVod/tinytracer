@@ -148,11 +148,18 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     return 0;
 }
 
+float randFloat(){
+    float x = (float)rand()/(float)(RAND_MAX);
+    return 0;
+}
+
 /* converts 2d pixel to camera ray */
 int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result) {
+    float x = (float) screenPos_x + randFloat();
+    float y = (float) screenPos_y + randFloat();
     Vec3 cam_coor = {
-        (float)screenPos_x / (float)cam->height,
-        (float)screenPos_y / (float)cam->height,
+        x / (float)cam->height,
+        y / (float)cam->height,
         0
     };
     Vec3 center_shift = {

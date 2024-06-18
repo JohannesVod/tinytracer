@@ -10,8 +10,10 @@
 const float FOCAL_LENGTH = 2.0f;
 const int WIDTH = 800;
 const int HEIGHT = 400;
+const int SAMPLES = 10;
 const char *FILENAME = "output.png";
 const char *OBJFILE = "baseScene.obj";
+
 
 void render_scene(const char *filename, const int width, const int height, const char *objfile) {
     // Measure total execution time
@@ -54,33 +56,36 @@ void render_scene(const char *filename, const int width, const int height, const
         #pragma omp for collapse(1) schedule(dynamic, 2) reduction(+:ray_intersect_time)
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                screen2CameraDir(&cam, x, y, &cam_ray.direction);
                 // Vec3 intersect_point;
                 double ray_intersect_start = omp_get_wtime();
-                Vec3 barycentric;
-                int tria_ind = castRay(&cam_ray, &mainScene, &barycentric);
-                int r, g, b;
-                r = 0;
-                g = 0;
-                b = 0;
-                if (tria_ind != -1) {
-                    // color = 255;
-                    Vec3 out_reflect;
-                    Triangle *this_tria = &mainScene.triangles->triangles[tria_ind];
-                    ray_intersects_triangle(&cam_ray, this_tria, &barycentric);
-                    Pixel pix = reflect(&cam_ray, &barycentric, this_tria, &out_reflect, &tex);
-                    r = pix.r;
-                    g = pix.g;
-                    b = pix.b;
+                Pixel final_col = {0, 0, 0, 255};
+                for (size_t sample = 0; sample < SAMPLES; sample++)
+                {
+                    screen2CameraDir(&cam, x, y, &cam_ray.direction);
+                    Vec3 barycentric;
+                    int tria_ind = castRay(&cam_ray, &mainScene, &barycentric);
+                    int r, g, b;
+                    if (tria_ind != -1) {
+                        // color = 255;
+                        Vec3 out_reflect;
+                        Triangle *this_tria = &mainScene.triangles->triangles[tria_ind];
+                        ray_intersects_triangle(&cam_ray, this_tria, &barycentric);
+                        Pixel pix = reflect(&cam_ray, &barycentric, this_tria, &out_reflect, &tex);
+                        final_col.r += pix.r;
+                        final_col.g += pix.g;
+                        final_col.b += pix.b;
+                    }
                 }
-
+                final_col.r /= SAMPLES;
+                final_col.g /= SAMPLES;
+                final_col.b /= SAMPLES;
                 double ray_intersect_end = omp_get_wtime();
                 thread_ray_intersect_time += (ray_intersect_end - ray_intersect_start);
                 thread_num_tests++;
                 int this_y = height - y - 1;
-                image[(this_y * width + x) * 3] = (unsigned char)(r);                  // Red
-                image[(this_y * width + x) * 3 + 1] = (unsigned char)(g);              // Green
-                image[(this_y * width + x) * 3 + 2] = (unsigned char)(b);              // Blue
+                image[(this_y * width + x) * 3] = (unsigned char)(final_col.r);                  // Red
+                image[(this_y * width + x) * 3 + 1] = (unsigned char)(final_col.g);              // Green
+                image[(this_y * width + x) * 3 + 2] = (unsigned char)(final_col.b);              // Blue
             }
         }
 
@@ -111,6 +116,7 @@ void render_scene(const char *filename, const int width, const int height, const
 }
 
 int main() {
+    srand(time(NULL));
     render_scene(FILENAME, WIDTH, HEIGHT, OBJFILE);
     printf("Image created successfully: %s\n", FILENAME);
     return 0;
