@@ -7,29 +7,36 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-const float FOCAL_LENGTH = 2.0f;
+const float FOCAL_LENGTH = 2.5f;
 const int WIDTH = 800;
-const int HEIGHT = 400;
-const int SAMPLES = 1;
+const int HEIGHT = 400; 
+const int SAMPLES = 5;
+const int gridcells = 30;
 const char *FILENAME = "output.png";
 const char *OBJFILE = "baseScene.obj";
-
 
 void render_scene(const char *filename, const int width, const int height, const char *objfile) {
     // Measure total execution time
     double preprocess_start = omp_get_wtime();
-
+    for (size_t i = 0; i < 1000; i++)
+    {
+        Vec3 normal = {1, 1, 1};
+        vec3_normalize(&normal, &normal);
+        Vec3 rand_v = rand_lambertian(&normal);
+        printf("add_cube((%f, %f, %f))\n", rand_v.x, rand_v.y, rand_v.z);
+    }
+    return;
     // Load mesh
     Triangles triangles;
     read_obj_file(objfile, &triangles);
     Texture tex = load_texture("testTex.png");
 
-    Vec3 cam_pos = {0, 0, 500}; 
+    Vec3 cam_pos = {0, 0, 5}; 
     Vec3 cam_rot = {0, 0, 0};
     Camera cam = {cam_pos, cam_rot, width, height, FOCAL_LENGTH};
 
     Scene mainScene;
-    buildScene(&cam, &triangles, &mainScene, 12);
+    buildScene(&cam, &triangles, &mainScene, gridcells);
     double preprocess_end = omp_get_wtime();
     double prepocess_time = preprocess_end - preprocess_start;
     printf("Preprocessed in: %f seconds\n", prepocess_time);
@@ -64,18 +71,10 @@ void render_scene(const char *filename, const int width, const int height, const
                 for (size_t sample = 0; sample < SAMPLES; sample++)
                 {
                     screen2CameraDir(&cam, x, y, &cam_ray.direction);
-                    Vec3 barycentric;
-                    int tria_ind = castRay(&cam_ray, &mainScene, &barycentric);
-                    if (tria_ind != -1) {
-                        // color = 255;
-                        Vec3 out_reflect;
-                        Triangle *this_tria = &mainScene.triangles->triangles[tria_ind];
-                        ray_intersects_triangle(&cam_ray, this_tria, &barycentric);
-                        Pixel pix = reflect(&cam_ray, &barycentric, this_tria, &out_reflect, &tex);
-                        r += pix.r;
-                        g += pix.g;
-                        b += pix.b;
-                    }
+                    Vec3 pix = trace(&mainScene, &cam_ray, 4);
+                    r += pix.x;
+                    g += pix.y;
+                    b += pix.z;
                 }
                 r /= SAMPLES;
                 g /= SAMPLES;
@@ -84,9 +83,9 @@ void render_scene(const char *filename, const int width, const int height, const
                 thread_ray_intersect_time += (ray_intersect_end - ray_intersect_start);
                 thread_num_tests++;
                 int this_y = height - y - 1;
-                image[(this_y * width + x) * 3] = (unsigned char)(r);                  // Red
-                image[(this_y * width + x) * 3 + 1] = (unsigned char)(g);              // Green
-                image[(this_y * width + x) * 3 + 2] = (unsigned char)(b);              // Blue
+                image[(this_y * width + x) * 3] = (unsigned char)(r*255);                  // Red
+                image[(this_y * width + x) * 3 + 1] = (unsigned char)(g*255);              // Green
+                image[(this_y * width + x) * 3 + 2] = (unsigned char)(b*255);              // Blue
             }
         }
 

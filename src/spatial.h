@@ -3,6 +3,18 @@
 #include "mesh.h"
 #include <math.h>
 
+// Struct to represent a texture
+typedef struct {
+    Vec3 *pixels;    // Array of pixels
+    int width;       // Width of the texture
+    int height;      // Height of the texture
+} Texture;
+
+typedef struct {
+    Vec3 color;
+    float emissive;
+} Material;
+
 typedef struct {
     int *trias;
     int trias_capacity;
@@ -38,6 +50,7 @@ typedef struct {
     Triangles *triangles;
     Voxel *voxels; // cells
     Box bbox;
+    Material *mats;
 } Scene;
 
 int getVoxelIndex(Scene *scene, int x, int y, int z){
@@ -56,6 +69,7 @@ void freeScene(Scene *scene){
     }
     free(scene->voxels);
     free_triangles(scene->triangles);
+    free(scene->mats);
 }
 
 void point2floor(Vec3 *p, float boxsize){
@@ -171,6 +185,11 @@ void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
             }
         }
     }
+    scene->mats = (Material *)malloc(2 * sizeof(Material));
+    Material emiss = {{0,0,0}, 1};
+    Material diffuse = {{1, 1, 1}, 0};
+    scene->mats[0] = emiss;
+    scene->mats[1] = diffuse;
 }
 
 int isInGrid(Scene *scene, Vec3Int *cell){
@@ -182,7 +201,6 @@ int isInGrid(Scene *scene, Vec3Int *cell){
     }
     return 1;
 }
-
 
 int handleVoxel(Scene *scene, Voxel *vox, Ray *r, Vec3 *barycentric){
     float min_t = 1e10;

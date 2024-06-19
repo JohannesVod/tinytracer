@@ -88,6 +88,12 @@ void vec3_inverse(Vec3 *a, Vec3 *result){
     result->z = 1/a->z;
 }
 
+void vec3_invert(Vec3 *a, Vec3 *result){
+    result->x = -a->x;
+    result->y = -a->y;
+    result->z = -a->z;
+}
+
 void vec3_copy(Vec3 *v, Vec3 *result) {
     result->x = v->x;
     result->y = v->y;
@@ -129,18 +135,55 @@ float vec3_magnitude(Vec3 *v) {
     return sqrt(v->x * v->x + v->y * v->y + v->z * v->z);
 }
 
+float randFloat(){
+    float x = (float)rand()/(float)(RAND_MAX);
+    return x;
+}
+
 void vec3_normalize(Vec3 *v, Vec3 *result) {
     float magnitude = vec3_magnitude(v);
     if (magnitude > 0) {
-        result->x = v->x / magnitude;
-        result->y = v->y / magnitude;
-        result->z = v->z / magnitude;
+        vec3_scale(result, 1/magnitude, result);
     } else {
         // If the magnitude is zero, return a zero vector
         result->x = 0;
         result->y = 0;
         result->z = 0;
     }
+}
+
+/* return random point on unit sphere. Randomized algorithm. TODO: try out faster functions */
+Vec3 rand_unit(){
+    Vec3 curr;
+    for (size_t i = 0; i < 100; i++)
+    {
+        curr.x = (randFloat()-0.5)*2;
+        curr.y = (randFloat()-0.5)*2;
+        curr.z = (randFloat()-0.5)*2;
+        float mag_squared = vec3_dot(&curr, &curr);
+        if (mag_squared <= 1 && mag_squared != 0){
+            vec3_scale(&curr, 1/sqrt(mag_squared), &curr);
+            return curr;
+        }
+    }
+    Vec3 ret_vec = {1, 0, 0}; 
+    return ret_vec;
+}
+
+Vec3 rand_hemi_vec(Vec3 *normal){
+    Vec3 rand = rand_unit();
+    if (vec3_dot(normal, &rand) < 0){
+        vec3_invert(&rand, &rand);
+    }
+    return rand;
+}
+
+/* Returns random vector along normal using lambertian reflection*/
+Vec3 rand_lambertian(Vec3 *normal){
+    Vec3 rand = rand_unit();
+    vec3_add(&rand, normal, &rand);
+    vec3_normalize(&rand, &rand);
+    return rand;
 }
 
 int get_intersection_point(Plane *p, Ray *r, Vec3 *result) {
