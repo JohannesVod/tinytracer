@@ -186,10 +186,10 @@ void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
         }
     }
     scene->mats = (Material *)malloc(2 * sizeof(Material));
-    Material emiss = {{0,0,0}, 1};
+    Material emiss = {{1, 1, 1}, 4};
     Material diffuse = {{1, 1, 1}, 0};
-    scene->mats[0] = emiss;
-    scene->mats[1] = diffuse;
+    scene->mats[0] = diffuse;
+    scene->mats[1] = emiss;
 }
 
 int isInGrid(Scene *scene, Vec3Int *cell){
@@ -209,7 +209,7 @@ int handleVoxel(Scene *scene, Voxel *vox, Ray *r, Vec3 *barycentric){
     for (int i = 0; i < vox->trias_count; i++){
         int t_ind = vox->trias[i];
         if (ray_intersects_triangle(r, &scene->triangles->triangles[t_ind], &out_temp)){
-            if (out_temp.x < min_t){
+            if (out_temp.x > 0.0001 && out_temp.x < min_t){
                 tria_ind = t_ind;
                 vec3_copy(&out_temp, barycentric);
                 min_t = out_temp.x;

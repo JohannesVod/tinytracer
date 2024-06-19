@@ -87,7 +87,8 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             int v1, v2, v3;
             int vt1, vt2, vt3;
             int vn1, vn2, vn3;
-            sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d", &v1, &vt1, &vn1, &v2, &vt2, &vn2, &v3, &vt3, &vn3);
+            int mat_index;
+            sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d %d", &v1, &vt1, &vn1, &v2, &vt2, &vn2, &v3, &vt3, &vn3, &mat_index);
 
             Triangle t;
             vec3_copy(&vertices[v1 - 1], &t.v1);
@@ -101,7 +102,7 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             vec3_copy(&normals[vn1 - 1], &t.vn1);
             vec3_copy(&normals[vn2 - 1], &t.vn2);
             vec3_copy(&normals[vn3 - 1], &t.vn3);
-
+            t.material = mat_index;
             mesh->triangles[mesh->count++] = t;
         }
     }

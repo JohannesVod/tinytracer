@@ -10,7 +10,7 @@
 const float FOCAL_LENGTH = 2.5f;
 const int WIDTH = 800;
 const int HEIGHT = 400; 
-const int SAMPLES = 5;
+const int SAMPLES = 100;
 const int gridcells = 30;
 const char *FILENAME = "output.png";
 const char *OBJFILE = "baseScene.obj";
@@ -18,14 +18,6 @@ const char *OBJFILE = "baseScene.obj";
 void render_scene(const char *filename, const int width, const int height, const char *objfile) {
     // Measure total execution time
     double preprocess_start = omp_get_wtime();
-    for (size_t i = 0; i < 1000; i++)
-    {
-        Vec3 normal = {1, 1, 1};
-        vec3_normalize(&normal, &normal);
-        Vec3 rand_v = rand_lambertian(&normal);
-        printf("add_cube((%f, %f, %f))\n", rand_v.x, rand_v.y, rand_v.z);
-    }
-    return;
     // Load mesh
     Triangles triangles;
     read_obj_file(objfile, &triangles);
@@ -79,6 +71,9 @@ void render_scene(const char *filename, const int width, const int height, const
                 r /= SAMPLES;
                 g /= SAMPLES;
                 b /= SAMPLES;
+                if (r > 1){r = 1;}
+                if (g > 1){g = 1;}
+                if (b > 1){b = 1;}
                 double ray_intersect_end = omp_get_wtime();
                 thread_ray_intersect_time += (ray_intersect_end - ray_intersect_start);
                 thread_num_tests++;
