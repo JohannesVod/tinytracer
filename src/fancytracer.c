@@ -10,7 +10,7 @@
 const float FOCAL_LENGTH = 2.5f;
 const int WIDTH = 800;
 const int HEIGHT = 400; 
-const int SAMPLES = 1000;
+const int SAMPLES = 1;
 const int gridcells = 30;
 const char *FILENAME = "output.png";
 const char *OBJFILE = "baseScene.obj";

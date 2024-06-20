@@ -221,7 +221,7 @@ int handleVoxel(Scene *scene, Voxel *vox, Ray *r, Vec3 *barycentric){
     return tria_ind;
 }
 
-/*casts a ray into the scene. Returns the index of the triangle it intersects.*/
+/*casts a ray into the scene. Returns the index of the triangle it intersects. TODO: speed up via better intersection tests*/
 int castRay(Ray *ray_inpt, Scene *scene, Vec3 *barycentric){
     Ray r;
     vec3_copy(&ray_inpt->origin, &r.origin);
@@ -253,13 +253,19 @@ int castRay(Ray *ray_inpt, Scene *scene, Vec3 *barycentric){
     if (r.direction.z <= 0){ tMax.z = floored.z; }
 
     vec3_abs(&tDelta, &tDelta);
+    int res = -1;
+    float best_t = 1e10;
+    Vec3 curr_barycentric;
     while (isInGrid(scene, &curr_cell)){
         // handle cell here:
         int vox_ind = getVoxelIndex(scene, curr_cell.x, curr_cell.y, curr_cell.z);
         Voxel *vox = &scene->voxels[vox_ind];
-        int res = handleVoxel(scene, vox, ray_inpt, barycentric);
-        if (res != -1){
-            return res;
+        int this_res = handleVoxel(scene, vox, ray_inpt, &curr_barycentric);
+
+        if (this_res != -1 && curr_barycentric.x < best_t){
+            res = this_res;
+            best_t = curr_barycentric.x;
+            vec3_copy(&curr_barycentric, barycentric);
         }
         if (tMax.x < tMax.y){
             if (tMax.x < tMax.z){
@@ -282,7 +288,7 @@ int castRay(Ray *ray_inpt, Scene *scene, Vec3 *barycentric){
             }
         }
     }
-    return -1;
+    return res;
 }
 
 #endif
