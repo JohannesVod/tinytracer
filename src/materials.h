@@ -110,8 +110,8 @@ Vec3 trace(Scene *scene, Ray *cam_ray, int bounces){
             Vec3 tria_normal;
             GetTriangleNormal(this_tria, &barycentric, &tria_normal);
             // reflection direction:
-            // Vec3 out_reflect;
-            // reflect(curr_ray, &barycentric, this_tria, &out_reflect);
+            Vec3 out_reflect;
+            reflect(&curr_ray, &barycentric, this_tria, &out_reflect);
             // diffuse direction:
             Material *this_mat = &scene->mats[this_tria->material];
             vec3_mul(&res, &this_mat->color, &res);
@@ -120,6 +120,9 @@ Vec3 trace(Scene *scene, Ray *cam_ray, int bounces){
                 return res;
             }
             Vec3 diffuse = rand_lambertian(&tria_normal);
+            if (this_mat->metallic > 0){
+                vec3_copy(&out_reflect, &diffuse);
+            }
             // calc new ray
             Vec3 dir_scaled; vec3_copy(&curr_ray.direction, &dir_scaled);
             vec3_scale(&dir_scaled, barycentric.x, &dir_scaled);
