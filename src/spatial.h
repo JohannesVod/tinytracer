@@ -211,7 +211,7 @@ int handleVoxel(Scene *scene, Voxel *vox, Ray *r, Vec3 *barycentric){
     for (int i = 0; i < vox->trias_count; i++){
         int t_ind = vox->trias[i];
         if (ray_intersects_triangle(r, &scene->triangles->triangles[t_ind], &out_temp)){
-            if (out_temp.x > 0.0001 && out_temp.x < min_t){
+            if (out_temp.x > 0.1 && out_temp.x < min_t){
                 tria_ind = t_ind;
                 vec3_copy(&out_temp, barycentric);
                 min_t = out_temp.x;
@@ -261,7 +261,6 @@ int castRay(Ray *ray_inpt, Scene *scene, Vec3 *barycentric){
         int vox_ind = getVoxelIndex(scene, curr_cell.x, curr_cell.y, curr_cell.z);
         Voxel *vox = &scene->voxels[vox_ind];
         int this_res = handleVoxel(scene, vox, ray_inpt, &curr_barycentric);
-
         if (this_res != -1 && curr_barycentric.x < best_t){
             res = this_res;
             best_t = curr_barycentric.x;
