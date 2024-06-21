@@ -95,7 +95,7 @@ void free_texture(Texture *texture) {
     }
 }
 
-Vec3 trace(Scene *scene, Ray *cam_ray, int bounces){
+Vec3 trace(Scene *scene, Ray *cam_ray, int bounces, Texture *tex){
     Ray curr_ray;
     vec3_copy(&cam_ray->origin, &curr_ray.origin);
     vec3_copy(&cam_ray->direction, &curr_ray.direction);
@@ -109,6 +109,11 @@ Vec3 trace(Scene *scene, Ray *cam_ray, int bounces){
             Triangle *this_tria = &scene->triangles->triangles[tria_ind];
             Vec3 tria_normal;
             GetTriangleNormal(this_tria, &barycentric, &tria_normal);
+            tria_normal.x = (tria_normal.x + 1)/2;
+            tria_normal.y = (tria_normal.y + 1)/2;
+            tria_normal.z = (tria_normal.z + 1)/2;
+            return tria_normal;
+            return GetPixelFromTria(tex, this_tria, &barycentric);
             // reflection direction:
             Vec3 out_reflect;
             reflect(&curr_ray, &barycentric, this_tria, &out_reflect);
