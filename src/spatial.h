@@ -189,7 +189,7 @@ void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
     scene->mats = (Material *)malloc(3 * sizeof(Material));
     Material emiss = {{1, 1, 1}, 0, 4};
     Material diffuse = {{1, 1, 1}, 0, 0};
-    Material diffuse_red = {{1, 1, 1}, 1, 0};
+    Material diffuse_red = {{1, 1, 1}, 0, 0};
     scene->mats[0] = diffuse;
     scene->mats[1] = emiss;
     scene->mats[2] = diffuse_red;

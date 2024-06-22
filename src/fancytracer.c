@@ -9,8 +9,8 @@
 
 const float FOCAL_LENGTH = 2.5f;
 const int WIDTH = 800;
-const int HEIGHT = 400; 
-const int SAMPLES = 1000;
+const int HEIGHT = 400;
+const int SAMPLES = 20;
 const int gridcells = 30;
 const char *FILENAME = "output.png";
 const char *OBJFILE = "baseScene.obj";
@@ -70,7 +70,7 @@ void render_scene() {
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
                     screen2CameraDir(&cam, x, y, &cam_ray.direction);
-                    Vec3 pix = trace(&mainScene, &cam_ray, 4);
+                    Vec3 pix = trace(&mainScene, &cam_ray, 4, &tex);
                     int this_y = HEIGHT - y - 1;
                     image_buff[(this_y * WIDTH + x) * 3] += pix.x*255;            // Red
                     image_buff[(this_y * WIDTH + x) * 3 + 1] += pix.y*255;        // Green
