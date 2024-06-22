@@ -1,5 +1,5 @@
-#ifndef VEC3_H
-#define VEC3_H
+#ifndef LINALG_H
+#define LINALG_H
 #include <math.h>
 
 typedef struct {

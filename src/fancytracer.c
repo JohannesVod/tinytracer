@@ -2,31 +2,36 @@
 #include <stdlib.h>
 #include <time.h>
 #include <omp.h> // Include the OpenMP header
-#include "materials.h"
+#include "toneMapping.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
 const float FOCAL_LENGTH = 2.5f;
-const int WIDTH = 800;
-const int HEIGHT = 400;
+const int WIDTH = 400;
+const int HEIGHT = 200;
 const int SAMPLES = 20;
 const int gridcells = 30;
 const char *FILENAME = "output.png";
 const char *OBJFILE = "baseScene.obj";
 
 void storeImage(unsigned char *image, float *image_buff, int curr_samples) {
+    float max_v = 0;
+    for (int i = 0; i < HEIGHT*WIDTH*3; i++) {
+        if (image_buff[i] > max_v){
+            max_v = image_buff[i];
+        }
+    }
     for (int y = 0; y < HEIGHT; y++) {
         for (int x = 0; x < WIDTH; x++) {
-            float x_img = image_buff[(y * WIDTH + x) * 3]/curr_samples;
-            float y_img = image_buff[(y * WIDTH + x) * 3+1]/curr_samples;
-            float z_img = image_buff[(y * WIDTH + x) * 3+2]/curr_samples;
-            if (x_img > 255){x_img = 255;}
-            if (y_img > 255){y_img = 255;}
-            if (z_img > 255){z_img = 255;}
-            image[(y * WIDTH + x) * 3] = (unsigned char)x_img;
-            image[(y * WIDTH + x) * 3 + 1] = (unsigned char)y_img;
-            image[(y * WIDTH + x) * 3 + 2] = (unsigned char)z_img;
+            Vec3 c;
+            c.x = image_buff[(y * WIDTH + x) * 3]/curr_samples;
+            c.y = image_buff[(y * WIDTH + x) * 3+1]/curr_samples;
+            c.z = image_buff[(y * WIDTH + x) * 3+2]/curr_samples;
+            Vec3 col = reinhard_extended_luminance(c, max_v);
+            image[(y * WIDTH + x) * 3] = (unsigned char)(col.x*255);
+            image[(y * WIDTH + x) * 3 + 1] = (unsigned char)(col.y*255);
+            image[(y * WIDTH + x) * 3 + 2] = (unsigned char)(col.z*255);
         }
     }
     if (!stbi_write_png(FILENAME, WIDTH, HEIGHT, 3, image, WIDTH * 3)) {
@@ -72,9 +77,9 @@ void render_scene() {
                     screen2CameraDir(&cam, x, y, &cam_ray.direction);
                     Vec3 pix = trace(&mainScene, &cam_ray, 4, &tex);
                     int this_y = HEIGHT - y - 1;
-                    image_buff[(this_y * WIDTH + x) * 3] += pix.x*255;            // Red
-                    image_buff[(this_y * WIDTH + x) * 3 + 1] += pix.y*255;        // Green
-                    image_buff[(this_y * WIDTH + x) * 3 + 2] += pix.z*255;        // Blue
+                    image_buff[(this_y * WIDTH + x) * 3] += pix.x;            // Red
+                    image_buff[(this_y * WIDTH + x) * 3 + 1] += pix.y;        // Green
+                    image_buff[(this_y * WIDTH + x) * 3 + 2] += pix.z;        // Blue
                 }
             }
             #pragma omp single
