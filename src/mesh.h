@@ -102,6 +102,10 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             vec3_copy(&normals[vn1 - 1], &t.vn1);
             vec3_copy(&normals[vn2 - 1], &t.vn2);
             vec3_copy(&normals[vn3 - 1], &t.vn3);
+
+            if (mat_index != 1){
+                mat_index = 0;
+            }
             t.material = mat_index;
             mesh->triangles[mesh->count++] = t;
         }
@@ -150,7 +154,7 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
 }
 /* converts 2d pixel to camera ray */
 int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result) {
-    float x = (float) screenPos_x + randFloat();
+    float x = (float) screenPos_x + randFloat(); // add small rand value to achieve "antialiasing"
     float y = (float) screenPos_y + randFloat();
     Vec3 cam_coor = {
         x / (float)cam->height,

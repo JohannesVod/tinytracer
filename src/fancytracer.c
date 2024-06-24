@@ -10,8 +10,8 @@
 const float FOCAL_LENGTH = 2.5f;
 const int WIDTH = 400;
 const int HEIGHT = 200;
-const int SAMPLES = 20;
-const int gridcells = 30;
+const int SAMPLES = 10000;
+const int gridcells = 50;
 const char *FILENAME = "output.png";
 const char *OBJFILE = "baseScene.obj";
 
@@ -28,10 +28,14 @@ void storeImage(unsigned char *image, float *image_buff, int curr_samples) {
             c.x = image_buff[(y * WIDTH + x) * 3]/curr_samples;
             c.y = image_buff[(y * WIDTH + x) * 3+1]/curr_samples;
             c.z = image_buff[(y * WIDTH + x) * 3+2]/curr_samples;
-            Vec3 col = reinhard_extended_luminance(c, max_v);
-            image[(y * WIDTH + x) * 3] = (unsigned char)(col.x*255);
-            image[(y * WIDTH + x) * 3 + 1] = (unsigned char)(col.y*255);
-            image[(y * WIDTH + x) * 3 + 2] = (unsigned char)(col.z*255);
+            //c = reinhard_extended_luminance(c, max_v);
+            if (c.x > 1){ c.x = 1; }
+            if (c.y > 1){ c.y = 1; }
+            if (c.z > 1){ c.z = 1; }
+
+            image[(y * WIDTH + x) * 3] = (unsigned char)(c.x*255);
+            image[(y * WIDTH + x) * 3 + 1] = (unsigned char)(c.y*255);
+            image[(y * WIDTH + x) * 3 + 2] = (unsigned char)(c.z*255);
         }
     }
     if (!stbi_write_png(FILENAME, WIDTH, HEIGHT, 3, image, WIDTH * 3)) {
@@ -47,7 +51,7 @@ void render_scene() {
     read_obj_file(OBJFILE, &triangles);
     Texture tex = load_texture("testTex.png");
 
-    Vec3 cam_pos = {0, 0, 5}; 
+    Vec3 cam_pos = {0, 0, 3}; 
     Vec3 cam_rot = {0, 0, 0};
     Camera cam = {cam_pos, cam_rot, WIDTH, HEIGHT, FOCAL_LENGTH};
 

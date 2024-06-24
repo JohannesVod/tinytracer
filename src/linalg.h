@@ -112,6 +112,18 @@ void vec3_ceil(Vec3 *v, Vec3 *result) {
     result->z = floor(v->z+1);
 }
 
+void vec3_min(Vec3 *a, Vec3 *b, Vec3 *result) {
+    result->x = fminf(a->x, b->x);
+    result->y = fminf(a->y, b->y);
+    result->z = fminf(a->z, b->z);
+}
+
+void vec3_max(Vec3 *a, Vec3 *b, Vec3 *result) {
+    result->x = fmaxf(a->x, b->x);
+    result->y = fmaxf(a->y, b->y);
+    result->z = fmaxf(a->z, b->z);
+}
+
 void vec3_round(Vec3 *v, Vec3 *result) {
     result->x = roundf(v->x);
     result->y = roundf(v->y);

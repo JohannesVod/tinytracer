@@ -1,7 +1,8 @@
-A tiny fast raytracer written in plain C with almost no dependencies which supports basic materials.
+A tiny but powerful raytracer in pure C. It is not as fast as for example blender cycles, but only consists of ~1000 lines of code and is easy to understand (i hope). It can handle basic materials and textures.
 
 TODOS:
-- faster tracing through scene by calculating triangle voxel intersections for every triangle/voxel
+- add comments
+- better datastructure for faster ray tracing (BVH instead of simple grid)
+- importance sampling to reduce noise
+- faster tracing using GPU acceleration
 - better tone mapping (filmic, ... ?)
-- more materials
-- better raytracing that reduces noise, for example importance sampling

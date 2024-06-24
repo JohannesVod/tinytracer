@@ -25,7 +25,7 @@ dirs:
 run: all
 	$(BIN)/fancytracer
 
-debug: CFLAGS += -g -O0
+debug: CFLAGS += -g -O2
 debug: clean dirs fancytracer
 
 fast: CFLAGS += -O2

@@ -109,9 +109,10 @@ Vec3 trace(Scene *scene, Ray *cam_ray, int bounces, Texture *tex){
             Triangle *this_tria = &scene->triangles->triangles[tria_ind];
             Vec3 tria_normal;
             GetTriangleNormal(this_tria, &barycentric, &tria_normal);
-            tria_normal.x = (tria_normal.x + 1)/2;
-            tria_normal.y = (tria_normal.y + 1)/2;
-            tria_normal.z = (tria_normal.z + 1)/2;
+            // tria_normal.x = (tria_normal.x + 1)/2;
+            // tria_normal.y = (tria_normal.y + 1)/2;
+            // tria_normal.z = (tria_normal.z + 1)/2;
+            // return tria_normal;
             // reflection direction:
             Vec3 out_reflect;
             reflect(&curr_ray, &barycentric, this_tria, &out_reflect);
