@@ -254,18 +254,13 @@ int castRay(Ray *ray_inpt, Scene *scene, Vec3 *barycentric){
     if (r.direction.z <= 0){ tMax.z = floored.z; }
 
     vec3_abs(&tDelta, &tDelta);
-    int res = -1;
-    float best_t = 1e10;
-    Vec3 curr_barycentric;
     while (isInGrid(scene, &curr_cell)){
         // handle cell here:
         int vox_ind = getVoxelIndex(scene, curr_cell.x, curr_cell.y, curr_cell.z);
         Voxel *vox = &scene->voxels[vox_ind];
-        int this_res = handleVoxel(scene, vox, ray_inpt, &curr_barycentric);
-        if (this_res != -1 && curr_barycentric.x < best_t){
-            res = this_res;
-            best_t = curr_barycentric.x;
-            vec3_copy(&curr_barycentric, barycentric);
+        int this_res = handleVoxel(scene, vox, ray_inpt, barycentric);
+        if (this_res != -1){
+            return this_res;
         }
         if (tMax.x < tMax.y){
             if (tMax.x < tMax.z){
@@ -288,7 +283,7 @@ int castRay(Ray *ray_inpt, Scene *scene, Vec3 *barycentric){
             }
         }
     }
-    return res;
+    return -1;
 }
 
 #endif
