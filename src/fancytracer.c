@@ -10,7 +10,7 @@
 const float FOCAL_LENGTH = 2.1f;
 const int WIDTH = 800;
 const int HEIGHT = 400;
-const int SAMPLES = 1000;
+const int SAMPLES = 10;
 const int BOUNCES = 4;
 const int gridcells = 150;
 const char *FILENAME = "output.png";

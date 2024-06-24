@@ -153,20 +153,6 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     return 0;
 }
 
-int segment_intersects_triangle(Vec3 *seg_start, Vec3 *seg_end, Triangle *t, Vec3 *out){
-    Vec3 ray_dir; vec3_subtract(seg_end, seg_start, &ray_dir);
-    Ray r;
-    vec3_copy(seg_start, &r.origin);
-    float seg_length = vec3_magnitude(&ray_dir);
-    vec3_copy(&ray_dir, &r.direction);
-    if (ray_intersects_triangle(&r, t, out)){
-        if (out->x <= seg_length){
-            return 1;
-        }
-    }
-    return 0;
-}
-
 /* Can also be used for BVH in the future!!! Thanks to https://tavianator.com/2015/ray_box_nan.html */
 int ray_intersects_box(Ray *ray, Vec3 *box_min, Vec3 *box_max) {
     float tmin = -INFINITY, tmax = INFINITY;
@@ -196,8 +182,9 @@ int point_in_box(Vec3 *p, Vec3 *box_min, Vec3 *box_max){
     return 0;
 }
 
-/* function which checks if a triangle is inside a voxel */
-int triangle_intersects_voxel(Triangle *t, Vec3 *voxel_min, float boxsize) {
+/* function which checks if a triangle is inside a voxel. Does not always give correct result,
+but if it returns zero it is guaranteed to not intersect! */
+int triangle_intersects_voxel_heuristic(Triangle *t, Vec3 *voxel_min, float boxsize) {
     Vec3 voxel_max;
     vec3_add(voxel_min, &(Vec3){boxsize, boxsize, boxsize}, &voxel_max);
 
@@ -222,25 +209,30 @@ int triangle_intersects_voxel(Triangle *t, Vec3 *voxel_min, float boxsize) {
         }
     }
 
-    // Check if the triangle plane intersects the voxel by checking intersections of diagonals
-    Vec3 out;
-    if (segment_intersects_triangle(voxel_min, &voxel_max, t, &out)){
-        return 1;
-    }
-    Vec3 p1 = {voxel_min->x+boxsize, voxel_min->y, voxel_min->z+boxsize};
-    Vec3 p2 = {voxel_max.x-boxsize, voxel_max.y, voxel_max.z-boxsize};
-    if (segment_intersects_triangle(&p1, &p2, t, &out)){
-        return 1;
-    }
-    p1 = (Vec3) {voxel_min->x, voxel_min->y, voxel_min->z+boxsize};
-    p2 = (Vec3) {voxel_max.x, voxel_max.y, voxel_max.z-boxsize};
-    if (segment_intersects_triangle(&p1, &p2, t, &out)){
-        return 1;
-    }
-    p1 = (Vec3) {voxel_min->x+boxsize, voxel_min->y, voxel_min->z};
-    p2 = (Vec3) {voxel_max.x-boxsize, voxel_max.y, voxel_max.z};
-    if (segment_intersects_triangle(&p1, &p2, t, &out)){
-        return 1;
+    // Check if the triangle PLANE intersects the voxel
+    Vec3 e1, e2, normal;
+    vec3_subtract(&t->v2, &t->v1, &e1);
+    vec3_subtract(&t->v3, &t->v1, &e2);
+    vec3_cross(&e1, &e2, &normal); // triangle normal
+    
+    float d = -vec3_dot(&normal, &t->v1);
+    float sign = 0;
+    for (size_t i = 0; i < 8; i++)
+    {
+        Vec3 corner = {
+            (i & 1) ? voxel_max.x : voxel_min->x,
+            (i & 2) ? voxel_max.y : voxel_min->y,
+            (i & 4) ? voxel_max.z : voxel_min->z,
+        };
+        float this_dist = vec3_dot(&normal, &corner) + d;
+        if (i == 0){
+            sign = this_dist <= 0 ? -1 : 1;
+        }
+        else{
+            if ((sign < 0 && this_dist > 0) || (sign > 0 && this_dist <= 0)){
+                return 1;
+            }
+        }
     }
     return 0;
 }

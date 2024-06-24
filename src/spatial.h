@@ -179,9 +179,16 @@ void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
         for (int x_i = coor_1.x; x_i <= coor_2.x; x_i++){
             for (int y_i = coor_1.y; y_i <= coor_2.y; y_i++){
                 for (int z_i = coor_1.z; z_i <= coor_2.z; z_i++){
-                    int arr_ind = getVoxelIndex(scene, x_i, y_i, z_i);
-                    Voxel *vox = &scene->voxels[arr_ind];
-                    AddTriangle(vox, i);
+                    Vec3 voxel_min = {
+                        scene->bbox.p1.x + x_i * scene->boxsize,
+                        scene->bbox.p1.y + y_i * scene->boxsize,
+                        scene->bbox.p1.z + z_i * scene->boxsize
+                    };
+                    if (triangle_intersects_voxel_heuristic(&t, &voxel_min, scene->boxsize)) {
+                        int arr_ind = getVoxelIndex(scene, x_i, y_i, z_i);
+                        Voxel *vox = &scene->voxels[arr_ind];
+                        AddTriangle(vox, i);
+                    }
                 }
             }
         }
@@ -257,13 +264,24 @@ int castRay(Ray *ray_inpt, Scene *scene, Vec3 *barycentric){
     int res = -1;
     float best_t = 1e10;
     Vec3 curr_barycentric;
-    
-    while (isInGrid(scene, &curr_cell)){
+    int counter = 1;
+    while (isInGrid(scene, &curr_cell) && counter != 0){
+        counter++;
         // handle cell here:
         int vox_ind = getVoxelIndex(scene, curr_cell.x, curr_cell.y, curr_cell.z);
         Voxel *vox = &scene->voxels[vox_ind];
         int this_res = handleVoxel(scene, vox, ray_inpt, &curr_barycentric);
         if (this_res != -1 && curr_barycentric.x < best_t){
+            // small improvement. 
+            float max_v = -INFINITY;
+            Box tria_bbox = get_bbox(&scene->triangles->triangles[this_res]);
+            Vec3 lengths_vec; vec3_subtract(&tria_bbox.p2, &tria_bbox.p1, &lengths_vec);
+            float *lengths = (float *)&lengths_vec;
+            for (size_t i = 0; i < 3; i++)
+            {
+                max_v = lengths[i] > max_v ? lengths[i] : max_v;
+            }
+            counter = -(int)((max_v/scene->boxsize)+0.5);
             res = this_res;
             best_t = curr_barycentric.x;
             vec3_copy(&curr_barycentric, barycentric);
