@@ -6,3 +6,4 @@ TODOS:
 - importance sampling to reduce noise
 - faster tracing using GPU acceleration
 - better tone mapping (filmic, ... ?)
+- SIMD instructions?

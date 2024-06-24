@@ -152,6 +152,99 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
     }
     return 0;
 }
+
+int segment_intersects_triangle(Vec3 *seg_start, Vec3 *seg_end, Triangle *t, Vec3 *out){
+    Vec3 ray_dir; vec3_subtract(seg_end, seg_start, &ray_dir);
+    Ray r;
+    vec3_copy(seg_start, &r.origin);
+    float seg_length = vec3_magnitude(&ray_dir);
+    vec3_copy(&ray_dir, &r.direction);
+    if (ray_intersects_triangle(&r, t, out)){
+        if (out->x <= seg_length){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* Can also be used for BVH in the future!!! Thanks to https://tavianator.com/2015/ray_box_nan.html */
+int ray_intersects_box(Ray *ray, Vec3 *box_min, Vec3 *box_max) {
+    float tmin = -INFINITY, tmax = INFINITY;
+    float *bmin = (float *)box_min;
+    float *bmax = (float *)box_max;
+    float *rorigin = (float *)&ray->origin;
+    Vec3 raydir_inv; vec3_safeinverse(&ray->direction, &raydir_inv);
+    float *rdir_inv = (float *)&raydir_inv;
+
+    for (int i = 0; i < 3; ++i) {
+        float t1 = (bmin[i] - rorigin[i])*rdir_inv[i];
+        float t2 = (bmax[i] - rorigin[i])*rdir_inv[i];
+
+        tmin = max(tmin, min(t1, t2));
+        tmax = min(tmax, max(t1, t2));
+    }
+    return tmax > max(tmin, 0.0);
+}
+
+/* checks if point is inside voxel */
+int point_in_box(Vec3 *p, Vec3 *box_min, Vec3 *box_max){
+    if (p->x >= box_min->x && p->x <= box_max->x &&
+            p->y >= box_min->y && p->y <= box_max->y &&
+            p->z >= box_min->z && p->z <= box_max->z) {
+            return 1;
+        }
+    return 0;
+}
+
+/* function which checks if a triangle is inside a voxel */
+int triangle_intersects_voxel(Triangle *t, Vec3 *voxel_min, float boxsize) {
+    Vec3 voxel_max;
+    vec3_add(voxel_min, &(Vec3){boxsize, boxsize, boxsize}, &voxel_max);
+
+    // Check if any vertex is inside the voxel
+    Vec3 vertices[3] = {t->v1, t->v2, t->v3};
+    for (int i = 0; i < 3; i++) {
+        if (point_in_box(&vertices[i], voxel_min, &voxel_max)){
+            return 1;
+        };
+    }
+
+    // Check if any edge intersects the voxel
+    for (int i = 0; i < 3; i++) {
+        Vec3 edge_start = vertices[i];
+        Vec3 edge_end = vertices[(i + 1) % 3];
+        Vec3 direction;
+        vec3_subtract(&edge_end, &edge_start, &direction);
+        
+        Ray edge_ray = {edge_start, direction};
+        if (ray_intersects_box(&edge_ray, voxel_min, &voxel_max)) {
+            return 1;
+        }
+    }
+
+    // Check if the triangle plane intersects the voxel by checking intersections of diagonals
+    Vec3 out;
+    if (segment_intersects_triangle(voxel_min, &voxel_max, t, &out)){
+        return 1;
+    }
+    Vec3 p1 = {voxel_min->x+boxsize, voxel_min->y, voxel_min->z+boxsize};
+    Vec3 p2 = {voxel_max.x-boxsize, voxel_max.y, voxel_max.z-boxsize};
+    if (segment_intersects_triangle(&p1, &p2, t, &out)){
+        return 1;
+    }
+    p1 = (Vec3) {voxel_min->x, voxel_min->y, voxel_min->z+boxsize};
+    p2 = (Vec3) {voxel_max.x, voxel_max.y, voxel_max.z-boxsize};
+    if (segment_intersects_triangle(&p1, &p2, t, &out)){
+        return 1;
+    }
+    p1 = (Vec3) {voxel_min->x+boxsize, voxel_min->y, voxel_min->z};
+    p2 = (Vec3) {voxel_max.x-boxsize, voxel_max.y, voxel_max.z};
+    if (segment_intersects_triangle(&p1, &p2, t, &out)){
+        return 1;
+    }
+    return 0;
+}
+
 /* converts 2d pixel to camera ray */
 int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result) {
     float x = (float) screenPos_x + randFloat(); // add small rand value to achieve "antialiasing"

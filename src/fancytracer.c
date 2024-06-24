@@ -7,11 +7,11 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-const float FOCAL_LENGTH = 2.5f;
-const int WIDTH = 400;
-const int HEIGHT = 200;
-const int SAMPLES = 10000;
-const int gridcells = 50;
+const float FOCAL_LENGTH = 2.1f;
+const int WIDTH = 800;
+const int HEIGHT = 400;
+const int SAMPLES = 1000;
+const int gridcells = 150;
 const char *FILENAME = "output.png";
 const char *OBJFILE = "baseScene.obj";
 

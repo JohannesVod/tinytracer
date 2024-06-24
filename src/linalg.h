@@ -22,6 +22,14 @@ typedef struct {
     Vec3 origin, direction;
 } Ray;
 
+static inline float min(float x, float y) {
+    return x < y ? x : y;
+}
+
+static inline float max(float x, float y) {
+    return x > y ? x : y;
+}
+
 void vec3_subtract(Vec3 *a, Vec3 *b, Vec3 *result) {
     result->x = a->x - b->x;
     result->y = a->y - b->y;
@@ -86,6 +94,12 @@ void vec3_inverse(Vec3 *a, Vec3 *result){
     result->x = 1/a->x;
     result->y = 1/a->y;
     result->z = 1/a->z;
+}
+
+void vec3_safeinverse(Vec3 *a, Vec3 *result){
+    if (a->x == 0){ result->x = INFINITY; } else { a->x = 1/a->x; }
+    if (a->y == 0){ result->y = INFINITY; } else { a->y = 1/a->y; }
+    if (a->z == 0){ result->z = INFINITY; } else { a->z = 1/a->z; }
 }
 
 void vec3_invert(Vec3 *a, Vec3 *result){

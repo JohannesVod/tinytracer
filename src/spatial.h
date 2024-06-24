@@ -212,7 +212,7 @@ int handleVoxel(Scene *scene, Voxel *vox, Ray *r, Vec3 *barycentric){
     for (int i = 0; i < vox->trias_count; i++){
         int t_ind = vox->trias[i];
         if (ray_intersects_triangle(r, &scene->triangles->triangles[t_ind], &out_temp)){
-            if (out_temp.x > 0.00001 && out_temp.x < min_t){
+            if (out_temp.x < min_t){
                 tria_ind = t_ind;
                 vec3_copy(&out_temp, barycentric);
                 min_t = out_temp.x;
@@ -222,7 +222,7 @@ int handleVoxel(Scene *scene, Voxel *vox, Ray *r, Vec3 *barycentric){
     return tria_ind;
 }
 
-/*casts a ray into the scene. Returns the index of the triangle it intersects. TODO: speed up via better intersection tests*/
+/*casts a ray into the scene. Returns the index of the triangle it intersects.*/
 int castRay(Ray *ray_inpt, Scene *scene, Vec3 *barycentric){
     Ray r;
     vec3_copy(&ray_inpt->origin, &r.origin);
