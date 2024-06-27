@@ -122,6 +122,7 @@ Box get_bbox(Triangle *t){
 
 void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
     scene->triangles = trias;
+    int trias_per_voxel = 0;
     // calculate total bounding box first:
     vec3_copy( &cam->position, &scene->bbox.p1);
     vec3_copy( &cam->position, &scene->bbox.p2);
@@ -170,7 +171,6 @@ void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
             }
         }
     }
-
     for (int i = 0; i < trias->count; i++) {
         Triangle t = trias->triangles[i];
         Box bbox = get_bbox(&t);
@@ -185,10 +185,23 @@ void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
                         scene->bbox.p1.z + z_i * scene->boxsize
                     };
                     if (triangle_intersects_voxel_heuristic(&t, &voxel_min, scene->boxsize)) {
+                        trias_per_voxel ++;
                         int arr_ind = getVoxelIndex(scene, x_i, y_i, z_i);
                         Voxel *vox = &scene->voxels[arr_ind];
                         AddTriangle(vox, i);
                     }
+                }
+            }
+        }
+    }
+    int max_trias_count = 0;
+    for (int x_i = 0; x_i < scene->numboxes.x; x_i++){
+        for (int y_i = 0; y_i < scene->numboxes.y; y_i++){
+            for (int z_i = 0; z_i < scene->numboxes.z; z_i++){
+                int arr_ind = getVoxelIndex(scene, x_i, y_i, z_i);
+                int this_count = scene->voxels[arr_ind].trias_count;
+                if (this_count > max_trias_count){
+                    max_trias_count = this_count;
                 }
             }
         }
@@ -200,6 +213,7 @@ void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
     scene->mats[0] = diffuse;
     scene->mats[1] = emiss;
     scene->mats[2] = diffuse_red;
+    printf("Average trias per voxel: %f | Max trias in a voxel: %d\n", (float)trias_per_voxel/(scene->numboxes.x*scene->numboxes.y*scene->numboxes.z), max_trias_count);
 }
 
 int isInGrid(Scene *scene, Vec3Int *cell){
@@ -272,7 +286,7 @@ int castRay(Ray *ray_inpt, Scene *scene, Vec3 *barycentric){
         Voxel *vox = &scene->voxels[vox_ind];
         int this_res = handleVoxel(scene, vox, ray_inpt, &curr_barycentric);
         if (this_res != -1 && curr_barycentric.x < best_t){
-            // small improvement. 
+            // small improvement.
             float max_v = -INFINITY;
             Box tria_bbox = get_bbox(&scene->triangles->triangles[this_res]);
             Vec3 lengths_vec; vec3_subtract(&tria_bbox.p2, &tria_bbox.p1, &lengths_vec);

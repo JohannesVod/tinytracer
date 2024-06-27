@@ -122,7 +122,7 @@ void free_triangles(Triangles *mesh) {
 
 /* checks if ray intersects triangle and stores barycentric coordinates in out*/
 int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
-    const float epsilon = 1e-6;
+    const float epsilon = 1e-5;
     Vec3 e1, e2, e2_cross_raydir, b_cross_e1, b;
     vec3_subtract(&triangle->v2, &triangle->v1, &e1);
     vec3_subtract(&triangle->v3, &triangle->v1, &e2);

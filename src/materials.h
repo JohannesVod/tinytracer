@@ -73,14 +73,10 @@ void GetTriangleNormal(Triangle *triangle, Vec3 *barycentric, Vec3 *out){
     vec3_normalize(out, out); // TODO: maybe not needed
 }
 
-int reflect(Ray *ray, Vec3 *barycentric, Triangle *triangle, Vec3 *out){
-    // Interpolating the normal using barycentric coordinates
-    Vec3 normal;
-    GetTriangleNormal(triangle, barycentric, &normal);
-
+int reflect(Ray *ray, Triangle *triangle, Vec3 *tria_normal, Vec3 *out){
     // Reflect the ray direction along the normal
-    float dot_prod = vec3_dot(&ray->direction, &normal);
-    vec3_scale(&normal, -2 * dot_prod, out);
+    float dot_prod = vec3_dot(&ray->direction, tria_normal);
+    vec3_scale(tria_normal, -2 * dot_prod, out);
     vec3_add(&ray->direction, out, out);
     return 1;
 }
@@ -109,13 +105,13 @@ Vec3 trace(Scene *scene, Ray *cam_ray, int bounces, Texture *tex){
             Triangle *this_tria = &scene->triangles->triangles[tria_ind];
             Vec3 tria_normal;
             GetTriangleNormal(this_tria, &barycentric, &tria_normal);
-            tria_normal.x = (tria_normal.x + 1)/2;
-            tria_normal.y = (tria_normal.y + 1)/2;
-            tria_normal.z = (tria_normal.z + 1)/2;
-            return tria_normal;
+            // tria_normal.x = (tria_normal.x + 1)/2;
+            // tria_normal.y = (tria_normal.y + 1)/2;
+            // tria_normal.z = (tria_normal.z + 1)/2;
+            // return tria_normal;
             // reflection direction:
             Vec3 out_reflect;
-            reflect(&curr_ray, &barycentric, this_tria, &out_reflect);
+            reflect(&curr_ray, this_tria, &tria_normal, &out_reflect);
             // diffuse direction:
             Material *this_mat = &scene->mats[this_tria->material];
             vec3_mul(&res, &this_mat->color, &res);
@@ -125,6 +121,7 @@ Vec3 trace(Scene *scene, Ray *cam_ray, int bounces, Texture *tex){
             }
             Vec3 diffuse = rand_lambertian(&tria_normal);
             if (this_mat->metallic > 0){
+                printf("HI");
                 vec3_copy(&out_reflect, &diffuse);
             }
             // calc new ray

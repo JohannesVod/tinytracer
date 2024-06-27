@@ -8,11 +8,11 @@
 #include "stb_image_write.h"
 
 const float FOCAL_LENGTH = 2.1f;
-const int WIDTH = 800;
-const int HEIGHT = 400;
-const int SAMPLES = 10;
+const int WIDTH = 400;
+const int HEIGHT = 200;
+const int SAMPLES = 10000;
 const int BOUNCES = 4;
-const int gridcells = 150;
+const int gridcells = 15; // 150 for motorbike please
 const char *FILENAME = "output.png";
 const char *OBJFILE = "baseScene.obj";
 
