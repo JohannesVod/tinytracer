@@ -161,6 +161,13 @@ float vec3_magnitude(Vec3 *v) {
     return sqrt(v->x * v->x + v->y * v->y + v->z * v->z);
 }
 
+/* calculates the average of two vectors based on an alpha value */
+void vec3_lerp(Vec3 *v1, Vec3 *v2, float alpha, Vec3 *out){
+    Vec3 first_scale; vec3_scale(v1, 1-alpha, &first_scale);
+    Vec3 second_scale; vec3_scale(v2, alpha, &second_scale);
+    vec3_add(&first_scale, &second_scale, out);
+}
+
 float randFloat(){
     float x = (float)rand()/(float)(RAND_MAX);
     return x;

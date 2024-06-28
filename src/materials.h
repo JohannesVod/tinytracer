@@ -121,8 +121,7 @@ Vec3 trace(Scene *scene, Ray *cam_ray, int bounces, Texture *tex){
             }
             Vec3 diffuse = rand_lambertian(&tria_normal);
             if (this_mat->metallic > 0){
-                printf("HI");
-                vec3_copy(&out_reflect, &diffuse);
+                vec3_lerp(&out_reflect, &diffuse, 1-this_mat->metallic, &diffuse);
             }
             // calc new ray
             Vec3 dir_scaled; vec3_copy(&curr_ray.direction, &dir_scaled);

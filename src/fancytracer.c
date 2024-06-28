@@ -29,7 +29,7 @@ void storeImage(unsigned char *image, float *image_buff, int curr_samples) {
             c.x = image_buff[(y * WIDTH + x) * 3]/curr_samples;
             c.y = image_buff[(y * WIDTH + x) * 3+1]/curr_samples;
             c.z = image_buff[(y * WIDTH + x) * 3+2]/curr_samples;
-            //c = reinhard_extended_luminance(c, max_v);
+            c = reinhard_extended_luminance(c, max_v);
             if (c.x > 1){ c.x = 1; }
             if (c.y > 1){ c.y = 1; }
             if (c.z > 1){ c.z = 1; }

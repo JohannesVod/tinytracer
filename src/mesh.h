@@ -103,9 +103,6 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             vec3_copy(&normals[vn2 - 1], &t.vn2);
             vec3_copy(&normals[vn3 - 1], &t.vn3);
 
-            if (mat_index != 1){
-                mat_index = 0;
-            }
             t.material = mat_index;
             mesh->triangles[mesh->count++] = t;
         }

@@ -12,8 +12,11 @@ typedef struct {
 
 typedef struct {
     Vec3 color;
-    float metallic;
+    float metallic; // 1=full metallic, 0=diffuse
     float emissive;
+    float specular; 
+    float specular_roughness; // 0=completely reflective, 1=diffuse
+    Vec3 specular_color;
 } Material;
 
 typedef struct {
@@ -207,9 +210,9 @@ void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
         }
     }
     scene->mats = (Material *)malloc(3 * sizeof(Material));
-    Material emiss = {{1, 1, 1}, 0, 4};
-    Material diffuse = {{1, 1, 1}, 0, 0};
-    Material diffuse_red = {{1, 1, 1}, 1, 0};
+    Material emiss = {{1, 1, 1}, 0, 6, 0, 0, {0, 0, 0}};
+    Material diffuse = {{1, 1, 1}, 0, 0, 0, 0, {0, 0, 0}};
+    Material diffuse_red = {{1, 1, 1}, 0.75, 0, 0, 0, {0, 0, 0}};
     scene->mats[0] = diffuse;
     scene->mats[1] = emiss;
     scene->mats[2] = diffuse_red;
