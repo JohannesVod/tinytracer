@@ -1,23 +1,8 @@
 #ifndef SPATIAL_H
 #define SPATIAL_H
 #include "mesh.h"
+#include "materials.h"
 #include <math.h>
-
-// Struct to represent a texture
-typedef struct {
-    Vec3 *pixels;    // Array of pixels
-    int width;       // Width of the texture
-    int height;      // Height of the texture
-} Texture;
-
-typedef struct {
-    Vec3 color;
-    float metallic; // 1=full metallic, 0=diffuse
-    float emissive;
-    float specular; 
-    float specular_roughness; // 0=completely reflective, 1=diffuse
-    Vec3 specular_color;
-} Material;
 
 typedef struct {
     int *trias;

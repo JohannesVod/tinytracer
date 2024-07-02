@@ -4,10 +4,64 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "spatial.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "mesh.h"
+
+// Struct to represent a texture
+typedef struct {
+    Vec3 *pixels;    // Array of pixels
+    int width;       // Width of the texture
+    int height;      // Height of the texture
+} Texture;
+
+typedef struct {
+    char name[64];  // Material name
+
+    // Base color
+    union {
+        Vec3 color;
+        Texture *color_texture;
+    };
+    int has_color_texture;
+
+    // Metallic
+    union {
+        float metallic;
+        Texture *metallic_texture;
+    };
+    int has_metallic_texture;
+
+    // Emissive
+    union {
+        float emissive;
+        Texture *emissive_texture;
+    };
+    int has_emissive_texture;
+
+    // Specular
+    union {
+        float specular;
+        Texture *specular_texture;
+    };
+    int has_specular_texture;
+
+    // Specular roughness
+    union {
+        float specular_roughness;
+        Texture *specular_roughness_texture;
+    };
+    int has_specular_roughness_texture;
+
+    // Specular color
+    union {
+        Vec3 specular_color;
+        Texture *specular_color_texture;
+    };
+    int has_specular_color_texture;
+
+} Material;
 
 // Function to load a texture from a file
 Texture load_texture(const char *filename) {
@@ -91,50 +145,94 @@ void free_texture(Texture *texture) {
     }
 }
 
-Vec3 trace(Scene *scene, Ray *cam_ray, int bounces, Texture *tex){
-    Ray curr_ray;
-    vec3_copy(&cam_ray->origin, &curr_ray.origin);
-    vec3_copy(&cam_ray->direction, &curr_ray.direction);
-    Vec3 res;
-    res.x = 1; res.y = 1; res.z = 1;
-    for (int bounce = 0; bounce < bounces; bounce++)
-    {
-        Vec3 barycentric;
-        int tria_ind = castRay(&curr_ray, scene, &barycentric);
-        if (tria_ind != -1) { // intersection found!
-            Triangle *this_tria = &scene->triangles->triangles[tria_ind];
-            Vec3 tria_normal;
-            GetTriangleNormal(this_tria, &barycentric, &tria_normal);
-            // tria_normal.x = (tria_normal.x + 1)/2;
-            // tria_normal.y = (tria_normal.y + 1)/2;
-            // tria_normal.z = (tria_normal.z + 1)/2;
-            // return tria_normal;
-            // reflection direction:
-            Vec3 out_reflect;
-            reflect(&curr_ray, this_tria, &tria_normal, &out_reflect);
-            // diffuse direction:
-            Material *this_mat = &scene->mats[this_tria->material];
-            vec3_mul(&res, &this_mat->color, &res);
-            if (this_mat->emissive > 0){
-                vec3_scale(&res, this_mat->emissive, &res);
-                return res;
+Material* load_material(const char* mtl_filename) {
+    FILE* file = fopen(mtl_filename, "r");
+    if (!file) {
+        perror("Error opening material file");
+        return NULL;
+    }
+
+    Material* materials = NULL;
+    int material_count = 0;
+    int material_capacity = 10;
+    materials = malloc(material_capacity * sizeof(Material));
+
+    char line[256];
+    Material* current_material = NULL;
+
+    while (fgets(line, sizeof(line), file)) {
+        if (strncmp(line, "newmtl ", 7) == 0) {
+            if (material_count >= material_capacity) {
+                material_capacity *= 2;
+                materials = realloc(materials, material_capacity * sizeof(Material));
             }
-            Vec3 diffuse = rand_lambertian(&tria_normal);
-            if (this_mat->metallic > 0){
-                vec3_lerp(&out_reflect, &diffuse, 1-this_mat->metallic, &diffuse);
+            current_material = &materials[material_count++];
+            memset(current_material, 0, sizeof(Material));  // Set all to 0/NULL
+            sscanf(line, "newmtl %63s", current_material->name);
+        } else if (current_material) {
+            // Base color
+            if (strncmp(line, "Kd ", 3) == 0) {
+                sscanf(line, "Kd %f %f %f", &current_material->color.x, 
+                       &current_material->color.y, &current_material->color.z);
+            } else if (strncmp(line, "map_Kd ", 7) == 0) {
+                char texture_filename[256];
+                sscanf(line, "map_Kd %255s", texture_filename);
+                current_material->color_texture = load_texture(texture_filename);
+                current_material->has_color_texture = 1;
             }
-            // calc new ray
-            Vec3 dir_scaled; vec3_copy(&curr_ray.direction, &dir_scaled);
-            vec3_scale(&dir_scaled, barycentric.x, &dir_scaled);
-            vec3_add(&curr_ray.origin, &dir_scaled, &curr_ray.origin);
-            vec3_copy(&diffuse, &curr_ray.direction);
-        }
-        else{
-            break;
+            // Metallic
+            else if (strncmp(line, "Pm ", 3) == 0) {
+                sscanf(line, "Pm %f", &current_material->metallic);
+            } else if (strncmp(line, "map_Pm ", 7) == 0) {
+                char texture_filename[256];
+                sscanf(line, "map_Pm %255s", texture_filename);
+                current_material->metallic_texture = load_texture(texture_filename);
+                current_material->has_metallic_texture = 1;
+            }
+            // Emissive
+            else if (strncmp(line, "Ke ", 3) == 0) {
+                sscanf(line, "Ke %f", &current_material->emissive);
+            } else if (strncmp(line, "map_Ke ", 7) == 0) {
+                char texture_filename[256];
+                sscanf(line, "map_Ke %255s", texture_filename);
+                current_material->emissive_texture = load_texture(texture_filename);
+                current_material->has_emissive_texture = 1;
+            }
+            // Specular
+            else if (strncmp(line, "Ks ", 3) == 0) {
+                sscanf(line, "Ks %f", &current_material->specular);
+            } else if (strncmp(line, "map_Ks ", 7) == 0) {
+                char texture_filename[256];
+                sscanf(line, "map_Ks %255s", texture_filename);
+                current_material->specular_texture = load_texture(texture_filename);
+                current_material->has_specular_texture = 1;
+            }
+            // Specular roughness
+            else if (strncmp(line, "Ns ", 3) == 0) {
+                float ns;
+                sscanf(line, "Ns %f", &ns);
+                current_material->specular_roughness = 1.0f - (ns / 1000.0f); // Convert Ns to roughness
+            } else if (strncmp(line, "map_Ns ", 7) == 0) {
+                char texture_filename[256];
+                sscanf(line, "map_Ns %255s", texture_filename);
+                current_material->specular_roughness_texture = load_texture(texture_filename);
+                current_material->has_specular_roughness_texture = 1;
+            }
+            // Specular color
+            else if (strncmp(line, "Ks ", 3) == 0) {
+                sscanf(line, "Ks %f %f %f", &current_material->specular_color.x, 
+                       &current_material->specular_color.y, &current_material->specular_color.z);
+            } else if (strncmp(line, "map_Ks ", 7) == 0) {
+                char texture_filename[256];
+                sscanf(line, "map_Ks %255s", texture_filename);
+                current_material->specular_color_texture = load_texture(texture_filename);
+                current_material->has_specular_color_texture = 1;
+            }
         }
     }
-    vec3_scale(&res, 0.0, &res); // value denotes environment lighting 
-    return res;
+
+    fclose(file);
+    return materials;
 }
 
 #endif // MATERIALS_H
