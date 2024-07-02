@@ -5,13 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "linalg.h"
+#include "materials.h"
 
 typedef struct {
     Vec3 v1, v2, v3;
     Vec3 vn1, vn2, vn3; // maybe remove later to increase cache locality
     Vec2 vt1, vt2, vt3; // textures coordinates
-    int material;
+    Material *material;
 } Triangle;
 
 typedef struct {
@@ -266,6 +266,57 @@ int screen2CameraDir(Camera *cam, int screenPos_x, int screenPos_y, Vec3 *result
     vec3_add(&cam_coor, &center_shift, result);
     vec3_normalize(result, result);
     return 1;
+}
+
+/* Gets pixel from texture coordinate */
+Vec3 GetPixel(Vec2 *vc, Texture *tex){
+    int x = ((int) (vc->x*tex->width))%tex->width;
+    int y = (tex->height - (int) (vc->y*tex->height))%tex->height;
+    return tex->pixels[y*tex->width+x];
+}
+
+/* Gets pixel from barycentric coordinates */
+Vec3 GetPixelFromTria(Texture *tex, Triangle *t, Vec3 *barycentric){
+    Vec2 e1, e2;
+    vec2_subtract(&t->vt2, &t->vt1, &e1);
+    vec2_subtract(&t->vt3, &t->vt1, &e2);
+    vec2_scale(&e1, barycentric->y, &e1);
+    vec2_scale(&e2, barycentric->z, &e2);
+    Vec2 coor;
+    vec2_copy(&t->vt1, &coor);
+    vec2_add(&coor, &e1, &coor);
+    vec2_add(&coor, &e2, &coor);
+    return GetPixel(&coor, tex);
+}
+
+void GetTriangleNormal(Triangle *triangle, Vec3 *barycentric, Vec3 *out){
+    float u = barycentric->y;
+    float v = barycentric->z;
+    float w = 1 - u - v;
+    Vec3 vn1, vn2, vn3;
+    vec3_scale(&triangle->vn1, w, &vn1);
+    vec3_scale(&triangle->vn2, u, &vn2);
+    vec3_scale(&triangle->vn3, v, &vn3);
+    vec3_add(&vn1, &vn2, out);
+    vec3_add(out, &vn3, out);
+    vec3_normalize(out, out); // TODO: maybe not needed
+}
+
+int reflect(Ray *ray, Triangle *triangle, Vec3 *tria_normal, Vec3 *out){
+    // Reflect the ray direction along the normal
+    float dot_prod = vec3_dot(&ray->direction, tria_normal);
+    vec3_scale(tria_normal, -2 * dot_prod, out);
+    vec3_add(&ray->direction, out, out);
+    return 1;
+}
+
+/* returns value of material property. Reads from texture if it exists */
+Vec3 get_prop_val(Vec3OrTexture *vot, Triangle *triangle, Vec3 *barycentric) {
+    if (vot->uses_texture) {
+        return GetPixelFromTria(&vot->tex, triangle, barycentric);
+    } else {
+        return vot->value;
+    }
 }
 
 #endif // MESH_H

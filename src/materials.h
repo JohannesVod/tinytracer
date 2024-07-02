@@ -7,7 +7,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#include "mesh.h"
+#include "linalg.h"
 
 // Struct to represent a texture
 typedef struct {
@@ -18,7 +18,7 @@ typedef struct {
 
 typedef struct {
     Vec3 value;
-    Texture *tex;
+    Texture tex;
     int uses_texture;
 } Vec3OrTexture;
 
@@ -37,16 +37,8 @@ typedef struct {
     int material_count;
 } Materials;
 
-void free_materials(Materials mats){
-    for (size_t i = 0; i < mats.material_count; i++)
-    {
-        free_material(&mats.mats[i]);
-    }
-    free(&mats.mats);
-}
-
 // Function to load a texture from a file
-Texture *load_texture(const char *filename) {
+Texture load_texture(const char *filename) {
     Texture texture;
     int channels;
     unsigned char *data = stbi_load(filename, &texture.width, &texture.height, &channels, 4); // Force 4 channels for RGBA
@@ -72,58 +64,7 @@ Texture *load_texture(const char *filename) {
 
     // Free original image data
     stbi_image_free(data);
-    return &texture;
-}
-
-/* Gets pixel from texture coordinate */
-Vec3 GetPixel(Vec2 *vc, Texture *tex){
-    int x = ((int) (vc->x*tex->width))%tex->width;
-    int y = (tex->height - (int) (vc->y*tex->height))%tex->height;
-    return tex->pixels[y*tex->width+x];
-}
-
-/* Gets pixel from barycentric coordinates */
-Vec3 GetPixelFromTria(Texture *tex, Triangle *t, Vec3 *barycentric){
-    Vec2 e1, e2;
-    vec2_subtract(&t->vt2, &t->vt1, &e1);
-    vec2_subtract(&t->vt3, &t->vt1, &e2);
-    vec2_scale(&e1, barycentric->y, &e1);
-    vec2_scale(&e2, barycentric->z, &e2);
-    Vec2 coor;
-    vec2_copy(&t->vt1, &coor);
-    vec2_add(&coor, &e1, &coor);
-    vec2_add(&coor, &e2, &coor);
-    return GetPixel(&coor, tex);
-}
-
-void GetTriangleNormal(Triangle *triangle, Vec3 *barycentric, Vec3 *out){
-    float u = barycentric->y;
-    float v = barycentric->z;
-    float w = 1 - u - v;
-    Vec3 vn1, vn2, vn3;
-    vec3_scale(&triangle->vn1, w, &vn1);
-    vec3_scale(&triangle->vn2, u, &vn2);
-    vec3_scale(&triangle->vn3, v, &vn3);
-    vec3_add(&vn1, &vn2, out);
-    vec3_add(out, &vn3, out);
-    vec3_normalize(out, out); // TODO: maybe not needed
-}
-
-int reflect(Ray *ray, Triangle *triangle, Vec3 *tria_normal, Vec3 *out){
-    // Reflect the ray direction along the normal
-    float dot_prod = vec3_dot(&ray->direction, tria_normal);
-    vec3_scale(tria_normal, -2 * dot_prod, out);
-    vec3_add(&ray->direction, out, out);
-    return 1;
-}
-
-/* returns value of material property. Reads from texture if it exists */
-Vec3 get_prop_val(Vec3OrTexture *vot, Vec2 *uv, Triangle *triangle, Vec3 *barycentric) {
-    if (vot->uses_texture && vot->tex) {
-        return GetPixelFromTria(vot->tex, triangle, barycentric);
-    } else {
-        return vot->value;
-    }
+    return texture;
 }
 
 // Function to free a loaded texture
@@ -138,13 +79,8 @@ void free_texture(Texture *texture) {
 
 Materials load_materials(const char* mtl_filename) {
     FILE* file = fopen(mtl_filename, "r");
-    if (!file) {
-        perror("Error opening material file");
-        return;
-    }
-
     Materials materials;
-    int material_count = 0;
+    materials.material_count = 0;
     int material_capacity = 10;
     materials.mats = malloc(material_capacity * sizeof(Material));
 
@@ -153,11 +89,11 @@ Materials load_materials(const char* mtl_filename) {
 
     while (fgets(line, sizeof(line), file)) {
         if (strncmp(line, "newmtl ", 7) == 0) {
-            if (material_count >= material_capacity) {
+            if (materials.material_count >= material_capacity) {
                 material_capacity *= 2;
                 materials.mats = realloc(materials.mats, material_capacity * sizeof(Material));
             }
-            current_material = &materials.mats[material_count++];
+            current_material = &materials.mats[materials.material_count++];
             memset(current_material, 0, sizeof(Material));  // Set all to 0/NULL
             sscanf(line, "newmtl %63s", current_material->name);
         } else if (current_material) {
@@ -233,10 +169,8 @@ Materials load_materials(const char* mtl_filename) {
 }
 
 void free_vec3_or_texture(Vec3OrTexture *vot) {
-    if (vot->uses_texture && vot->tex) {
-        free_texture(vot->tex);
-        free(vot->tex);
-        vot->tex = NULL;
+    if (vot->uses_texture) {
+        free_texture(&vot->tex);
     }
     vot->uses_texture = 0;
 }
@@ -251,6 +185,15 @@ void free_material(Material *material) {
     free_vec3_or_texture(&material->specular);
     free_vec3_or_texture(&material->specular_roughness);
     free_vec3_or_texture(&material->specular_color);
+}
+
+
+void free_materials(Materials mats){
+    for (int i = 0; i < mats.material_count; i++)
+    {
+        free_material(&mats.mats[i]);
+    }
+    free(mats.mats);
 }
 
 #endif // MATERIALS_H

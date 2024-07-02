@@ -2,7 +2,6 @@
 #define TRACER_H
 #include "spatial.h"
 
-
 Vec3 trace(Scene *scene, Ray *cam_ray, int bounces){
     Ray curr_ray;
     vec3_copy(&cam_ray->origin, &curr_ray.origin);
@@ -26,14 +25,18 @@ Vec3 trace(Scene *scene, Ray *cam_ray, int bounces){
             reflect(&curr_ray, this_tria, &tria_normal, &out_reflect);
             // diffuse direction:
             Material *this_mat = this_tria->material;
-            vec3_mul(&res, &this_mat->color, &res);
-            if (this_mat->emissive > 0){
-                vec3_scale(&res, this_mat->emissive, &res);
+            float emissive = get_prop_val(&this_mat->emissive, this_tria, &barycentric).x;
+            float metallic = get_prop_val(&this_mat->metallic, this_tria, &barycentric).x;
+            Vec3 color = get_prop_val(&this_mat->color, this_tria, &barycentric);
+
+            vec3_mul(&res, &color, &res);
+            if (emissive > 0){
+                vec3_scale(&res, emissive, &res);
                 return res;
             }
             Vec3 diffuse = rand_lambertian(&tria_normal);
-            if (this_mat->metallic > 0){
-                vec3_lerp(&out_reflect, &diffuse, 1-this_mat->metallic, &diffuse);
+            if (metallic > 0){
+                vec3_lerp(&out_reflect, &diffuse, 1-metallic, &diffuse);
             }
             // calc new ray
             Vec3 dir_scaled; vec3_copy(&curr_ray.direction, &dir_scaled);
