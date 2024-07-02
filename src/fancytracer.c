@@ -15,6 +15,7 @@ const int BOUNCES = 4;
 const int gridcells = 15; // 150 for motorbike please
 const char *FILENAME = "output.png";
 const char *OBJFILE = "baseScene.obj";
+const char *MATFILENAME = "baseScene.mtl";
 
 void storeImage(unsigned char *image, float *image_buff, int curr_samples) {
     float max_v = 0;
@@ -48,16 +49,15 @@ void render_scene() {
     // Measure total execution time
     double preprocess_start = omp_get_wtime();
     // Load mesh
+    Materials mats = load_materials(MATFILENAME);
     Triangles triangles;
-    read_obj_file(OBJFILE, &triangles);
-    Texture tex = load_texture("testTex.png");
-
+    read_obj_file(OBJFILE, mats);
     Vec3 cam_pos = {0, 0, 3}; 
     Vec3 cam_rot = {0, 0, 0};
     Camera cam = {cam_pos, cam_rot, WIDTH, HEIGHT, FOCAL_LENGTH};
 
     Scene mainScene;
-    buildScene(&cam, &triangles, &mainScene, gridcells);
+    buildScene(&cam, &triangles, &mainScene, gridcells, mats);
     double preprocess_end = omp_get_wtime();
     double prepocess_time = preprocess_end - preprocess_start;
     printf("Preprocessed in: %f seconds\n", prepocess_time);
@@ -80,7 +80,7 @@ void render_scene() {
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
                     screen2CameraDir(&cam, x, y, &cam_ray.direction);
-                    Vec3 pix = trace(&mainScene, &cam_ray, BOUNCES, &tex);
+                    Vec3 pix = trace(&mainScene, &cam_ray, BOUNCES);
                     int this_y = HEIGHT - y - 1;
                     image_buff[(this_y * WIDTH + x) * 3] += pix.x;            // Red
                     image_buff[(this_y * WIDTH + x) * 3 + 1] += pix.y;        // Green

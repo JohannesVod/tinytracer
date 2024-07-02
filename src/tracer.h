@@ -1,9 +1,9 @@
-#ifndef MATERIALS_H
-#define MATERIALS_H
-#include "tracer.h"
+#ifndef TRACER_H
+#define TRACER_H
+#include "spatial.h"
 
 
-Vec3 trace(Scene *scene, Ray *cam_ray, int bounces, Texture *tex){
+Vec3 trace(Scene *scene, Ray *cam_ray, int bounces){
     Ray curr_ray;
     vec3_copy(&cam_ray->origin, &curr_ray.origin);
     vec3_copy(&cam_ray->direction, &curr_ray.direction);
@@ -25,7 +25,7 @@ Vec3 trace(Scene *scene, Ray *cam_ray, int bounces, Texture *tex){
             Vec3 out_reflect;
             reflect(&curr_ray, this_tria, &tria_normal, &out_reflect);
             // diffuse direction:
-            Material *this_mat = &scene->mats[this_tria->material];
+            Material *this_mat = this_tria->material;
             vec3_mul(&res, &this_mat->color, &res);
             if (this_mat->emissive > 0){
                 vec3_scale(&res, this_mat->emissive, &res);

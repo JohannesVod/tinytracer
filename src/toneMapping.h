@@ -1,6 +1,6 @@
 #ifndef TONEMAPPING_H
 #define TONEMAPPING_H
-#include "materials.h"
+#include "tracer.h"
 
 Vec3 pre = {0.2126f, 0.7152f, 0.0722f}; 
 

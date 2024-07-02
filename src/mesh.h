@@ -31,8 +31,15 @@ typedef struct {
     float focal_length;
 } Camera;
 
-/* reads object file and saves triangles */
-void read_obj_file(const char *filename, Triangles *mesh) {
+Material* find_material_by_name(Materials *mats, const char *name) {
+    for (int i = 0; i < mats->material_count; i++) {
+        if (strcmp(mats->mats[i].name, name) == 0) {
+            return &mats->mats[i];
+        }
+    }
+    return NULL; // Material not found
+}
+Triangles read_obj_file(const char *filename, Materials *mats) {
     FILE *file = fopen(filename, "r");
     if (!file) {
         perror("Error opening file");
@@ -44,6 +51,7 @@ void read_obj_file(const char *filename, Triangles *mesh) {
     int normal_capacity = 10;
     int triangle_capacity = 10;
     int texcoors_capacity = 10;
+
     Vec3 *vertices = malloc(vertex_capacity * sizeof(Vec3));
     Vec3 *normals = malloc(normal_capacity * sizeof(Vec3));
     Vec2 *texCoors = malloc(texcoors_capacity * sizeof(Vec2));
@@ -51,8 +59,10 @@ void read_obj_file(const char *filename, Triangles *mesh) {
     int normal_count = 0;
     int vertex_count = 0;
     int texcoors_count = 0;
-    mesh->triangles = malloc(triangle_capacity * sizeof(Triangle));
-    mesh->count = 0;
+
+    Triangles mesh;
+    mesh.triangles = malloc(triangle_capacity * sizeof(Triangle));
+    mesh.count = 0;
 
     while (fgets(line, sizeof(line), file)) {
         if (strncmp(line, "v ", 2) == 0) {
@@ -80,37 +90,44 @@ void read_obj_file(const char *filename, Triangles *mesh) {
             sscanf(line, "vn %f %f %f", &n.x, &n.y, &n.z);
             normals[normal_count++] = n;
         } else if (strncmp(line, "f ", 2) == 0) {
-            if (mesh->count >= triangle_capacity) {
+            if (mesh.count >= triangle_capacity) {
                 triangle_capacity *= 2;
-                mesh->triangles = realloc(mesh->triangles, triangle_capacity * sizeof(Triangle));
+                mesh.triangles = realloc(mesh.triangles, triangle_capacity * sizeof(Triangle));
             }
             int v1, v2, v3;
             int vt1, vt2, vt3;
             int vn1, vn2, vn3;
-            int mat_index;
-            sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d %d", &v1, &vt1, &vn1, &v2, &vt2, &vn2, &v3, &vt3, &vn3, &mat_index);
-
+            char material_name[64];
+            sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d %63s", 
+                   &v1, &vt1, &vn1, &v2, &vt2, &vn2, &v3, &vt3, &vn3, material_name);
+            
             Triangle t;
             vec3_copy(&vertices[v1 - 1], &t.v1);
             vec3_copy(&vertices[v2 - 1], &t.v2);
             vec3_copy(&vertices[v3 - 1], &t.v3);
-
             vec2_copy(&texCoors[vt1 - 1], &t.vt1);
             vec2_copy(&texCoors[vt2 - 1], &t.vt2);
             vec2_copy(&texCoors[vt3 - 1], &t.vt3);
-
             vec3_copy(&normals[vn1 - 1], &t.vn1);
             vec3_copy(&normals[vn2 - 1], &t.vn2);
             vec3_copy(&normals[vn3 - 1], &t.vn3);
+            
+            // Find the material by name and set the pointer
+            t.material = find_material_by_name(mats, material_name);
+            if (t.material == NULL) {
+                fprintf(stderr, "Warning: Material '%s' not found\n", material_name);
+            }
 
-            t.material = mat_index;
-            mesh->triangles[mesh->count++] = t;
+            mesh.triangles[mesh.count++] = t;
         }
     }
+
     free(vertices);
     free(normals);
     free(texCoors);
     fclose(file);
+
+    return mesh;
 }
 
 void free_triangles(Triangles *mesh) {

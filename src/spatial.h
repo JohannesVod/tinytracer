@@ -39,7 +39,7 @@ typedef struct {
     Triangles *triangles;
     Voxel *voxels; // cells
     Box bbox;
-    Material *mats;
+    Materials materials;
 } Scene;
 
 int getVoxelIndex(Scene *scene, int x, int y, int z){
@@ -56,9 +56,9 @@ void freeScene(Scene *scene){
             }
         }
     }
-    free(scene->voxels);
     free_triangles(scene->triangles);
-    free(scene->mats);
+    free(scene->voxels);
+    free_materials(scene->materials);
 }
 
 void point2floor(Vec3 *p, float boxsize){
@@ -108,7 +108,8 @@ Box get_bbox(Triangle *t){
     return bbox;
 }
 
-void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
+void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes, Materials mats){
+    scene->materials = mats;
     scene->triangles = trias;
     int trias_per_voxel = 0;
     // calculate total bounding box first:
@@ -194,13 +195,6 @@ void buildScene(Camera *cam, Triangles *trias, Scene *scene, int desired_boxes){
             }
         }
     }
-    scene->mats = (Material *)malloc(3 * sizeof(Material));
-    Material emiss = {{1, 1, 1}, 0, 6, 0, 0, {0, 0, 0}};
-    Material diffuse = {{1, 1, 1}, 0, 0, 0, 0, {0, 0, 0}};
-    Material diffuse_red = {{1, 1, 1}, 0.75, 0, 0, 0, {0, 0, 0}};
-    scene->mats[0] = diffuse;
-    scene->mats[1] = emiss;
-    scene->mats[2] = diffuse_red;
     printf("Average trias per voxel: %f | Max trias in a voxel: %d\n", (float)trias_per_voxel/(scene->numboxes.x*scene->numboxes.y*scene->numboxes.z), max_trias_count);
 }
 
