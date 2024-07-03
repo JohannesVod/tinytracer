@@ -25,6 +25,15 @@ dirs:
 run: all
 	$(BIN)/fancytracer
 
+run_only:
+	@if [ -f $(BIN)/fancytracer ]; then \
+		$(BIN)/fancytracer; \
+	else \
+		echo "fancytracer not found. Building first..."; \
+		$(MAKE) all; \
+		$(BIN)/fancytracer; \
+	fi
+
 debug: CFLAGS += -g -O0
 debug: clean dirs fancytracer
 

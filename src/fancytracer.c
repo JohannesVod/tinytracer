@@ -8,9 +8,9 @@
 #include "stb_image_write.h"
 
 const float FOCAL_LENGTH = 2.1f;
-const int WIDTH = 400;
+const int WIDTH = 200;
 const int HEIGHT = 200;
-const int SAMPLES = 10;
+const int SAMPLES = 1000;
 const int BOUNCES = 4;
 const int gridcells = 15; // 150 for motorbike please
 const char *FILENAME = "output.png";
@@ -50,6 +50,12 @@ void render_scene() {
     double preprocess_start = omp_get_wtime();
     // Load mesh
     Materials mats = load_materials(MATFILENAME);
+    for (int i = 0; i < mats.material_count; i++)
+    {
+        Material m = mats.mats[i];
+        print_material(&m);
+    }
+    
     Triangles triangles = read_obj_file(OBJFILE, &mats);
     Vec3 cam_pos = {0, 0, 3};
     Vec3 cam_rot = {0, 0, 0};

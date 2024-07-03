@@ -14,37 +14,49 @@ Vec3 trace(Scene *scene, Ray *cam_ray, int bounces){
         int tria_ind = castRay(&curr_ray, scene, &barycentric);
         if (tria_ind != -1) { // intersection found!
             Triangle *this_tria = &scene->triangles->triangles[tria_ind];
-            Vec3 tria_normal;
-            GetTriangleNormal(this_tria, &barycentric, &tria_normal);
-            // tria_normal.x = (tria_normal.x + 1)/2;
-            // tria_normal.y = (tria_normal.y + 1)/2;
-            // tria_normal.z = (tria_normal.z + 1)/2;
-            // return tria_normal;
-            // reflection direction:
-            Vec3 out_reflect;
-            reflect(&curr_ray, this_tria, &tria_normal, &out_reflect);
-            // diffuse direction:
+            
+            // read material properties:
             Material *this_mat = this_tria->material;
+            Vec3 base_color = get_prop_val(&this_mat->color, this_tria, &barycentric);
+            Vec3 spec_color = get_prop_val(&this_mat->specular_color, this_tria, &barycentric);
+            float spec_ior = get_prop_val(&this_mat->specular, this_tria, &barycentric).x;
             float emissive = get_prop_val(&this_mat->emissive, this_tria, &barycentric).x;
             float metallic = get_prop_val(&this_mat->metallic, this_tria, &barycentric).x;
-            Vec3 color = get_prop_val(&this_mat->color, this_tria, &barycentric);
-
-            vec3_mul(&res, &color, &res);
+            float roughness = get_prop_val(&this_mat->specular_roughness, this_tria, &barycentric).x;
+            // if it is light, return: 
             if (emissive > 0){
                 vec3_scale(&res, emissive, &res);
                 return res;
             }
-            Vec3 diffuse = rand_lambertian(&tria_normal);
-            if (metallic > 0){
-                vec3_lerp(&out_reflect, &diffuse, 1-metallic, &diffuse);
+            
+            // reflection and diffuse:
+            Vec3 tria_normal;
+            GetTriangleNormal(this_tria, &barycentric, &tria_normal);
+            // TODO: apply normal map here
+            Vec3 new_dir = rand_lambertian(&tria_normal);
+            Vec3 out_reflect; 
+            reflect(&curr_ray, this_tria, &tria_normal, &out_reflect);
+            vec3_lerp(&out_reflect, &new_dir, roughness, &out_reflect); // apply roughness
+            float fresnel = fresnel_dielectric_cos(vec3_dot(&curr_ray.direction, &tria_normal), 1+spec_ior);
+            // apply materials:
+            if (randFloat() < fresnel){ // make it specular ray:
+                vec3_mul(&res, &spec_color, &res); // apply specular color
+                vec3_copy(&out_reflect, &new_dir);
             }
-            // calc new ray
+            else{
+                vec3_mul(&res, &base_color, &res); // apply the base color
+            }
+            if (randFloat() < metallic){ // make it metallic ray:
+                vec3_copy(&out_reflect, &new_dir);
+            }
+
+            // calc new ray:
             Vec3 dir_scaled; vec3_copy(&curr_ray.direction, &dir_scaled);
             vec3_scale(&dir_scaled, barycentric.x, &dir_scaled);
             vec3_add(&curr_ray.origin, &dir_scaled, &curr_ray.origin);
-            vec3_copy(&diffuse, &curr_ray.direction);
+            vec3_copy(&new_dir, &curr_ray.direction);
         }
-        else{
+        else {
             break;
         }
     }

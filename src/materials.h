@@ -96,6 +96,9 @@ Materials load_materials(const char* mtl_filename) {
             current_material = &materials.mats[materials.material_count++];
             memset(current_material, 0, sizeof(Material));  // Set all to 0/NULL
             sscanf(line, "newmtl %63s", current_material->name);
+            current_material->specular_color.value.x = 1;
+            current_material->specular_color.value.y = 1;
+            current_material->specular_color.value.z = 1;
         } else if (current_material) {
             // Base color
             if (strncmp(line, "Kd ", 3) == 0) {
@@ -139,31 +142,21 @@ Materials load_materials(const char* mtl_filename) {
                 current_material->specular.uses_texture = 1;
             }
             // Specular roughness
-            else if (strncmp(line, "Ns ", 3) == 0) {
+            else if (strncmp(line, "Pr ", 3) == 0) {
                 float ns;
-                sscanf(line, "Ns %f", &ns);
-                float roughness = 1.0f - (ns / 1000.0f); // Convert Ns to roughness
-                current_material->specular_roughness.value.x = roughness;
-                current_material->specular_roughness.value.y = roughness;
-                current_material->specular_roughness.value.z = roughness;
-            } else if (strncmp(line, "map_Ns ", 7) == 0) {
+                sscanf(line, "Pr %f", &ns);
+                current_material->specular_roughness.value.x = ns;
+                current_material->specular_roughness.value.y = ns;
+                current_material->specular_roughness.value.z = ns;
+            } else if (strncmp(line, "map_Pr ", 7) == 0) {
                 char texture_filename[256];
                 sscanf(line, "map_Ns %255s", texture_filename);
                 current_material->specular_roughness.tex = load_texture(texture_filename);
                 current_material->specular_roughness.uses_texture = 1;
             }
-            // Specular color (reusing Ks for consistency with earlier code)
-            else if (strncmp(line, "Ks ", 3) == 0) {
-                sscanf(line, "Ks %f %f %f", &current_material->specular_color.value.x, 
-                       &current_material->specular_color.value.y, &current_material->specular_color.value.z);
-            } else if (strncmp(line, "map_Ks ", 7) == 0) {
-                char texture_filename[256];
-                sscanf(line, "map_Ks %255s", texture_filename);
-                current_material->specular_color.tex = load_texture(texture_filename);
-                current_material->specular_color.uses_texture = 1;
-            }
         }
     }
+    
     fclose(file);
     return materials;
 }
@@ -194,6 +187,33 @@ void free_materials(Materials mats){
         free_material(&mats.mats[i]);
     }
     free(mats.mats);
+}
+
+void print_vec3_or_texture(const char *label, const Vec3OrTexture *vot, int is_color) {
+    printf("  %s: ", label);
+    if (vot->uses_texture) {
+        printf("Texture (%dx%d)\n", vot->tex.width, vot->tex.height);
+    } else if (is_color) {
+        printf("RGB(%.3f, %.3f, %.3f)\n", vot->value.x, vot->value.y, vot->value.z);
+    } else {
+        printf("%.3f\n", vot->value.x);
+    }
+}
+
+void print_material(const Material *material) {
+    if (material == NULL) {
+        printf("Error: NULL material\n");
+        return;
+    }
+
+    printf("Material: %s\n", material->name);
+    print_vec3_or_texture("Color", &material->color, 1);
+    print_vec3_or_texture("Metallic", &material->metallic, 0);
+    print_vec3_or_texture("Emissive", &material->emissive, 1);
+    print_vec3_or_texture("Specular", &material->specular, 1);
+    print_vec3_or_texture("Specular Roughness", &material->specular_roughness, 0);
+    print_vec3_or_texture("Specular Color", &material->specular_color, 1);
+    printf("\n");
 }
 
 #endif // MATERIALS_H

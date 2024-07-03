@@ -233,4 +233,24 @@ int get_intersection_point(Plane *p, Ray *r, Vec3 *result) {
     return 1;
 }
 
+/* copied from Blender github: https://github.com/blender/blender/blob/e2c038218a6e8f031992126396f5daf46214f7f3/source/blender/gpu/shaders/material/gpu_shader_material_fresnel.glsl#L33) */
+float fresnel_dielectric_cos(float cosi, float ior)
+{
+    float eta = max(ior, 0.00001);
+    float c = fabs(cosi);
+    float g = eta * eta - 1.0 + c * c;
+    float result;
+
+    if (g > 0.0) {
+        g = sqrt(g);
+        float A = (g - c) / (g + c);
+        float B = (c * (g + c) - 1.0) / (c * (g - c) + 1.0);
+        result = 0.5 * A * A * (1.0 + B * B);
+    }
+    else {
+        result = 1.0; /* TIR (no refracted component) */
+    }
+    return result;
+}
+
 #endif // VEC3_H
