@@ -7,3 +7,12 @@ TODOS:
 - faster tracing using GPU acceleration
 - better tone mapping (filmic, ... ?)
 - SIMD instructions?
+- normal maps
+
+# Render your own scene
+
+To render your own scene, open the blender file in the scene folder. Change the materials and models, but make sure to do the following:
+
+- place textures inside the scene/textures folder
+- don't have spaces in the material names
+- use the principled bsdf node for the materials. You can use roughness/color/... textures, but you have to bake them

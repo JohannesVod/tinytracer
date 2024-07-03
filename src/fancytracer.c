@@ -14,8 +14,9 @@ const int SAMPLES = 1000;
 const int BOUNCES = 4;
 const int gridcells = 15; // 150 for motorbike please
 const char *FILENAME = "output.png";
-const char *OBJFILE = "baseScene.obj";
-const char *MATFILENAME = "baseScene.mtl";
+const char *OBJFILE = "scene/baseScene.obj";
+const char *MATFILENAME = "scene/baseScene.mtl";
+const char *TEXTURESFOLDER = "scene/textures";
 
 void storeImage(unsigned char *image, float *image_buff, int curr_samples) {
     float max_v = 0;
