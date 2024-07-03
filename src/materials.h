@@ -76,15 +76,19 @@ void free_texture(Texture *texture) {
         texture->height = 0;
     }
 }
-
 Materials load_materials(const char* mtl_filename) {
     FILE* file = fopen(mtl_filename, "r");
+    if (!file) {
+        fprintf(stderr, "Error: Unable to open file %s\n", mtl_filename);
+        exit(EXIT_FAILURE);
+    }
+
     Materials materials;
     materials.material_count = 0;
     int material_capacity = 10;
     materials.mats = malloc(material_capacity * sizeof(Material));
 
-    char line[256];
+    char line[1024];  // Increased buffer size for longer paths
     Material* current_material = NULL;
 
     while (fgets(line, sizeof(line), file)) {
@@ -96,29 +100,31 @@ Materials load_materials(const char* mtl_filename) {
             current_material = &materials.mats[materials.material_count++];
             memset(current_material, 0, sizeof(Material));  // Set all to 0/NULL
             sscanf(line, "newmtl %63s", current_material->name);
-            current_material->specular_color.value.x = 1;
-            current_material->specular_color.value.y = 1;
-            current_material->specular_color.value.z = 1;
+            current_material->specular_color.value = (Vec3){1, 1, 1};
         } else if (current_material) {
             // Base color
             if (strncmp(line, "Kd ", 3) == 0) {
                 sscanf(line, "Kd %f %f %f", &current_material->color.value.x, 
                        &current_material->color.value.y, &current_material->color.value.z);
             } else if (strncmp(line, "map_Kd ", 7) == 0) {
-                char texture_filename[256];
-                sscanf(line, "map_Kd %255s", texture_filename);
-                current_material->color.tex = load_texture(texture_filename);
+                char texture_filename[1024];
+                sscanf(line, "map_Kd %1023s", texture_filename);
+                char full_path[1280];  // Increased buffer size
+                snprintf(full_path, sizeof(full_path), "scene/%s", texture_filename);
+                current_material->color.tex = load_texture(full_path);
                 current_material->color.uses_texture = 1;
             }
             // Metallic
             else if (strncmp(line, "Pm ", 3) == 0) {
-                sscanf(line, "Pm %f", &current_material->metallic.value.x);
-                current_material->metallic.value.y = current_material->metallic.value.x;
-                current_material->metallic.value.z = current_material->metallic.value.x;
+                float pm;
+                sscanf(line, "Pm %f", &pm);
+                current_material->metallic.value = (Vec3){pm, pm, pm};
             } else if (strncmp(line, "map_Pm ", 7) == 0) {
-                char texture_filename[256];
-                sscanf(line, "map_Pm %255s", texture_filename);
-                current_material->metallic.tex = load_texture(texture_filename);
+                char texture_filename[1024];
+                sscanf(line, "map_Pm %1023s", texture_filename);
+                char full_path[1280];
+                snprintf(full_path, sizeof(full_path), "scene/%s", texture_filename);
+                current_material->metallic.tex = load_texture(full_path);
                 current_material->metallic.uses_texture = 1;
             }
             // Emissive
@@ -126,9 +132,11 @@ Materials load_materials(const char* mtl_filename) {
                 sscanf(line, "Ke %f %f %f", &current_material->emissive.value.x,
                        &current_material->emissive.value.y, &current_material->emissive.value.z);
             } else if (strncmp(line, "map_Ke ", 7) == 0) {
-                char texture_filename[256];
-                sscanf(line, "map_Ke %255s", texture_filename);
-                current_material->emissive.tex = load_texture(texture_filename);
+                char texture_filename[1024];
+                sscanf(line, "map_Ke %1023s", texture_filename);
+                char full_path[1280];
+                snprintf(full_path, sizeof(full_path), "scene/%s", texture_filename);
+                current_material->emissive.tex = load_texture(full_path);
                 current_material->emissive.uses_texture = 1;
             }
             // Specular
@@ -136,22 +144,24 @@ Materials load_materials(const char* mtl_filename) {
                 sscanf(line, "Ks %f %f %f", &current_material->specular.value.x,
                        &current_material->specular.value.y, &current_material->specular.value.z);
             } else if (strncmp(line, "map_Ks ", 7) == 0) {
-                char texture_filename[256];
-                sscanf(line, "map_Ks %255s", texture_filename);
-                current_material->specular.tex = load_texture(texture_filename);
+                char texture_filename[1024];
+                sscanf(line, "map_Ks %1023s", texture_filename);
+                char full_path[1280];
+                snprintf(full_path, sizeof(full_path), "scene/%s", texture_filename);
+                current_material->specular.tex = load_texture(full_path);
                 current_material->specular.uses_texture = 1;
             }
             // Specular roughness
             else if (strncmp(line, "Pr ", 3) == 0) {
-                float ns;
-                sscanf(line, "Pr %f", &ns);
-                current_material->specular_roughness.value.x = ns;
-                current_material->specular_roughness.value.y = ns;
-                current_material->specular_roughness.value.z = ns;
+                float pr;
+                sscanf(line, "Pr %f", &pr);
+                current_material->specular_roughness.value = (Vec3){pr, pr, pr};
             } else if (strncmp(line, "map_Pr ", 7) == 0) {
-                char texture_filename[256];
-                sscanf(line, "map_Ns %255s", texture_filename);
-                current_material->specular_roughness.tex = load_texture(texture_filename);
+                char texture_filename[1024];
+                sscanf(line, "map_Pr %1023s", texture_filename);
+                char full_path[1280];
+                snprintf(full_path, sizeof(full_path), "scene/%s", texture_filename);
+                current_material->specular_roughness.tex = load_texture(full_path);
                 current_material->specular_roughness.uses_texture = 1;
             }
         }

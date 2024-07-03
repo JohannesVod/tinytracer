@@ -1,25 +1,10 @@
 # Blender 4.1.1 MTL File: 'scene.blend'
 # www.blender.org
 
-newmtl 0
-Kd 0.800000 0.800000 0.800000
-Ks 0.500000 0.500000 0.500000
-Ke 0.000000 0.000000 0.000000
-Ni 1.500000
-d 1.000000
-illum 2
-Pr 0.500000
-Pm 0.000000
-Ps 0.000000
-Pc 0.000000
-Pcr 0.030000
-aniso 0.000000
-anisor 0.000000
-
 newmtl 1
 Kd 0.800000 0.800000 0.800000
 Ks 0.500000 0.500000 0.500000
-Ke 5.000000 5.000000 5.000000
+Ke 6.000000 6.000000 6.000000
 Ni 1.500000
 d 1.000000
 illum 2
@@ -31,10 +16,10 @@ Pcr 0.030000
 aniso 0.000000
 anisor 0.000000
 
-newmtl patterned_cobblestone
+newmtl testTextures
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
-Ni 1.450000
+Ni 1.500000
 d 1.000000
 illum 2
 Pm 0.000000
@@ -43,5 +28,5 @@ Pc 0.000000
 Pcr 0.030000
 aniso 0.000000
 anisor 0.000000
-map_Kd C:/Users/Johannes/Downloads/patterned_cobblestone_4k.blend/textures/patterned_cobblestone_diff_1k.png
-map_Pr C:/Users/Johannes/Downloads/patterned_cobblestone_4k.blend/textures/patterned_cobblestone_rough_1k.png
+map_Kd textures/patterned_cobblestone_diff_1k.png
+map_Pr textures/patterned_cobblestone_rough_1k.png

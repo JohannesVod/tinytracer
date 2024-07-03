@@ -7,12 +7,12 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-const float FOCAL_LENGTH = 2.1f;
-const int WIDTH = 200;
-const int HEIGHT = 200;
+const float FOCAL_LENGTH = 2.3f;
+const int WIDTH = 800;
+const int HEIGHT = 400;
 const int SAMPLES = 1000;
-const int BOUNCES = 4;
-const int gridcells = 15; // 150 for motorbike please
+const int BOUNCES = 3;
+const int gridcells = 50; // 150 for motorbike please
 const char *FILENAME = "output.png";
 const char *OBJFILE = "scene/baseScene.obj";
 const char *MATFILENAME = "scene/baseScene.mtl";
