@@ -8,11 +8,12 @@
 #include "stb_image_write.h"
 
 const float FOCAL_LENGTH = 2.3f;
+const float dof;
 const int WIDTH = 800;
 const int HEIGHT = 400;
 const int SAMPLES = 1000;
 const int BOUNCES = 3;
-const int gridcells = 50; // 150 for motorbike please
+const int gridcells = 200; // 150 for motorbike please
 const char *FILENAME = "output.png";
 const char *OBJFILE = "scene/baseScene.obj";
 const char *MATFILENAME = "scene/baseScene.mtl";
@@ -71,6 +72,11 @@ void render_scene() {
     double total_start = omp_get_wtime();
     unsigned char *image = (unsigned char *)malloc(WIDTH * HEIGHT * 3);
     float *image_buff = (float *)malloc(WIDTH * HEIGHT * sizeof(float) * 3);
+    for (size_t i = 0; i < WIDTH * HEIGHT * 3; i++)
+    {
+        image_buff[i] = 0;
+    }
+    
     if (!image || !image_buff) {
         printf("Error: Unable to allocate memory for image.\n");
         return;

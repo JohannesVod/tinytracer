@@ -211,6 +211,23 @@ Vec3 rand_hemi_vec(Vec3 *normal){
     return rand;
 }
 
+
+Vec3 rand_sphere(){
+    Vec3 curr;
+    for (size_t i = 0; i < 100; i++)
+    {
+        curr.x = (randFloat()-0.5)*2;
+        curr.y = (randFloat()-0.5)*2;
+        curr.z = 0;
+        float mag_squared = vec3_dot(&curr, &curr);
+        if (mag_squared <= 1 && mag_squared != 0){
+            vec3_scale(&curr, 1/sqrt(mag_squared), &curr);
+            return curr;
+        }
+    }
+    Vec3 ret_vec = {1, 0, 0}; 
+    return ret_vec;
+}
 /* Returns random vector along normal using lambertian reflection*/
 Vec3 rand_lambertian(Vec3 *normal){
     Vec3 rand = rand_unit();
