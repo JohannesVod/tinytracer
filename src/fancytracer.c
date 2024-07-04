@@ -8,12 +8,13 @@
 #include "stb_image_write.h"
 
 const float FOCAL_LENGTH = 2.3f;
-const float dof;
 const int WIDTH = 800;
 const int HEIGHT = 400;
+const float DOF = 0.1;
+const float FSTOP = 3;
 const int SAMPLES = 1000;
 const int BOUNCES = 3;
-const int gridcells = 200; // 150 for motorbike please
+const int gridcells = 5; // 150 for motorbike please
 const char *FILENAME = "output.png";
 const char *OBJFILE = "scene/baseScene.obj";
 const char *MATFILENAME = "scene/baseScene.mtl";
@@ -88,10 +89,10 @@ void render_scene() {
         cam_ray.origin = cam.position;
         for (int sampl = 0; sampl < SAMPLES; sampl++)
         {
-            #pragma omp for collapse(1) schedule(dynamic, 2)
+            #pragma omp for collapse(1) schedule(guided)
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
-                    screen2CameraDir(&cam, x, y, &cam_ray.direction);
+                    screen2CameraDir(&cam, DOF, FSTOP, x, y, &cam_ray);
                     Vec3 pix = trace(&mainScene, &cam_ray, BOUNCES);
                     int this_y = HEIGHT - y - 1;
                     image_buff[(this_y * WIDTH + x) * 3] += pix.x;            // Red

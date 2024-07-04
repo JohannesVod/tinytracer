@@ -252,7 +252,11 @@ int triangle_intersects_voxel_heuristic(Triangle *t, Vec3 *voxel_min, float boxs
 }
 
 /* converts 2d pixel to camera ray */
-int screen2CameraDir(Camera *cam, float dof, int screenPos_x, int screenPos_y, Vec3 *result) {
+int screen2CameraDir(Camera *cam, float dof, float dof_plane, int screenPos_x, int screenPos_y, Ray *result) {
+    Vec3 rand_dof = random_in_circle();
+    vec3_scale(&rand_dof, dof, &rand_dof);
+    vec3_add(&rand_dof, &cam->position, &result->origin);
+
     float x = (float) screenPos_x + randFloat(); // add small rand value to achieve "antialiasing"
     float y = (float) screenPos_y + randFloat();
     Vec3 cam_coor = {
@@ -263,23 +267,19 @@ int screen2CameraDir(Camera *cam, float dof, int screenPos_x, int screenPos_y, V
     Vec3 center_shift = {
         -((float)cam->width / (float)cam->height) * 0.5, -0.5, -cam->focal_length
     };
-    Vec3 sph = rand_sphere();
+    vec3_add(&cam_coor, &center_shift, &result->direction);
     
-    vec3_add(&cam_coor, &center_shift, result);
-    vec3_normalize(result, result);
+    float t = (-dof_plane)/result->direction.z;
+    Vec3 plane_intersect; vec3_scale(&result->direction, t, &plane_intersect);
+    vec3_subtract(&plane_intersect, &rand_dof, &result->direction);
+    vec3_normalize(&result->direction, &result->direction);
     return 1;
-}
-
-int modulo(int x,int N){
-    return (x % N + N) %N;
 }
 
 /* Gets pixel from texture coordinate */
 Vec3 GetPixel(Vec2 *vc, Texture *tex){
-    int x = ((int) (vc->x*tex->width));
-    x = modulo(x, tex->width);
-    int y = (tex->height - (int) (vc->y*tex->height));
-    y = modulo(y, tex->height);
+    int x = ((int) (vc->x*tex->width))%tex->width;
+    int y = (tex->height - (int) (vc->y*tex->height))%tex->height;
     return tex->pixels[y*tex->width+x];
 }
 

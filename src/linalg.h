@@ -203,16 +203,8 @@ Vec3 rand_unit(){
     return ret_vec;
 }
 
-Vec3 rand_hemi_vec(Vec3 *normal){
-    Vec3 rand = rand_unit();
-    if (vec3_dot(normal, &rand) < 0){
-        vec3_invert(&rand, &rand);
-    }
-    return rand;
-}
-
-
-Vec3 rand_sphere(){
+/* return random point in a circle. Randomized algorithm. */
+Vec3 random_in_circle(){
     Vec3 curr;
     for (size_t i = 0; i < 100; i++)
     {
@@ -221,13 +213,21 @@ Vec3 rand_sphere(){
         curr.z = 0;
         float mag_squared = vec3_dot(&curr, &curr);
         if (mag_squared <= 1 && mag_squared != 0){
-            vec3_scale(&curr, 1/sqrt(mag_squared), &curr);
             return curr;
         }
     }
-    Vec3 ret_vec = {1, 0, 0}; 
+    Vec3 ret_vec = {0, 0, 0}; 
     return ret_vec;
 }
+
+Vec3 rand_hemi_vec(Vec3 *normal){
+    Vec3 rand = rand_unit();
+    if (vec3_dot(normal, &rand) < 0){
+        vec3_invert(&rand, &rand);
+    }
+    return rand;
+}
+
 /* Returns random vector along normal using lambertian reflection*/
 Vec3 rand_lambertian(Vec3 *normal){
     Vec3 rand = rand_unit();
