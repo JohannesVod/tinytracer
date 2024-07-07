@@ -37,7 +37,7 @@ run_only:
 debug: CFLAGS += -g -O0
 debug: clean dirs fancytracer
 
-fast: CFLAGS += -O1
+fast: CFLAGS += -O3
 fast: clean dirs fancytracer
 
 # release: CFLAGS += -O3
