@@ -10,7 +10,7 @@
 const float FOCAL_LENGTH = 3.7f;
 const int WIDTH = 1600;
 const int HEIGHT = 800;
-const float DOF = 0.05;
+const float DOF = 0.018;
 const float FSTOP = 4.7;
 const int SAMPLES = 30000;
 const int BOUNCES = 3;

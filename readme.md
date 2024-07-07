@@ -1,4 +1,4 @@
-A tiny but powerful raytracer in pure C. It is not as fast as for example blender cycles, but only consists of ~1000 lines of code and is easy to understand (i hope). It can handle basic materials and textures.
+A tiny but powerful raytracer in pure C. It is not as fast as for example blender cycles, but only consists of ~1300 lines of code and is easy to understand (i hope). It can handle basic materials and textures.
 
 ![example render](renders/motorbike.png)
 
@@ -10,6 +10,7 @@ To render your own scene, open the blender file in the scene folder. Change the 
 - use the principled bsdf node for the materials. You can use roughness/color/... textures, but you have to bake them. They get loaded automatically into our raytracer if you do so.
 - execute the script i wrote inside Blender or export it as an obj file with materials
 - don't have spaces in the material names
+- the camera will always be at position x=0, y=0, z=0 and point down (see blender file)
 - run the command 
 ```make run```
 to render the scene
