@@ -7,14 +7,14 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
-const float FOCAL_LENGTH = 2.3f;
-const int WIDTH = 800;
-const int HEIGHT = 400;
-const float DOF = 0.1;
-const float FSTOP = 3;
-const int SAMPLES = 1000;
+const float FOCAL_LENGTH = 3.7f;
+const int WIDTH = 400;
+const int HEIGHT = 200;
+const float DOF = 0.05;
+const float FSTOP = 3.5;
+const int SAMPLES = 30000;
 const int BOUNCES = 3;
-const int gridcells = 5; // 150 for motorbike please
+const int gridcells = 150; // 150 for motorbike please
 const char *FILENAME = "output.png";
 const char *OBJFILE = "scene/baseScene.obj";
 const char *MATFILENAME = "scene/baseScene.mtl";
@@ -60,7 +60,7 @@ void render_scene() {
     }
     
     Triangles triangles = read_obj_file(OBJFILE, &mats);
-    Vec3 cam_pos = {0, 0, 3};
+    Vec3 cam_pos = {0, 0, 5};
     Vec3 cam_rot = {0, 0, 0};
     Camera cam = {cam_pos, cam_rot, WIDTH, HEIGHT, FOCAL_LENGTH};
 
@@ -89,7 +89,7 @@ void render_scene() {
         cam_ray.origin = cam.position;
         for (int sampl = 0; sampl < SAMPLES; sampl++)
         {
-            #pragma omp for collapse(1) schedule(guided)
+            #pragma omp for collapse(2) schedule(dynamic, 2)
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
                     screen2CameraDir(&cam, DOF, FSTOP, x, y, &cam_ray);

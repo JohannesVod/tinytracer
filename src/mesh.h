@@ -63,9 +63,11 @@ Triangles read_obj_file(const char *filename, Materials *mats) {
     Triangles mesh;
     mesh.triangles = malloc(triangle_capacity * sizeof(Triangle));
     mesh.count = 0;
-
+    char material_name[64];
     while (fgets(line, sizeof(line), file)) {
-        if (strncmp(line, "v ", 2) == 0) {
+        if (strncmp(line, "usemtl ", 7) == 0) {
+            sscanf(line, "usemtl %63s", material_name);
+        } else if (strncmp(line, "v ", 2) == 0) {
             if (vertex_count >= vertex_capacity) {
                 vertex_capacity *= 2;
                 vertices = realloc(vertices, vertex_capacity * sizeof(Vec3));
@@ -97,9 +99,9 @@ Triangles read_obj_file(const char *filename, Materials *mats) {
             int v1, v2, v3;
             int vt1, vt2, vt3;
             int vn1, vn2, vn3;
-            char material_name[64];
-            sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d %63s", 
-                   &v1, &vt1, &vn1, &v2, &vt2, &vn2, &v3, &vt3, &vn3, material_name);
+            
+            sscanf(line, "f %d/%d/%d %d/%d/%d %d/%d/%d", 
+                   &v1, &vt1, &vn1, &v2, &vt2, &vn2, &v3, &vt3, &vn3);
             
             Triangle t;
             vec3_copy(&vertices[v1 - 1], &t.v1);
@@ -136,7 +138,7 @@ void free_triangles(Triangles *mesh) {
 
 /* checks if ray intersects triangle and stores barycentric coordinates in out*/
 int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
-    const float epsilon = 1e-5;
+    const float epsilon = 1e-6;
     Vec3 e1, e2, e2_cross_raydir, b_cross_e1, b;
     vec3_subtract(&triangle->v2, &triangle->v1, &e1);
     vec3_subtract(&triangle->v3, &triangle->v1, &e2);
@@ -158,7 +160,7 @@ int ray_intersects_triangle(Ray *ray, Triangle *triangle, Vec3 *out) {
         return 0;
     }
     float t = inv_det * vec3_dot(&e2, &b_cross_e1); // t
-    if (t >= epsilon) {
+    if (t >= 1e-5) { // different epsilon because we avoid some troubles that way
         out->x = t;
         out->y = u;
         out->z = v;
@@ -185,6 +187,7 @@ int ray_intersects_box(Ray *ray, Vec3 *box_min, Vec3 *box_max) {
     }
     return tmax > max(tmin, 0.0);
 }
+
 
 /* checks if point is inside voxel */
 int point_in_box(Vec3 *p, Vec3 *box_min, Vec3 *box_max){
@@ -259,6 +262,7 @@ int screen2CameraDir(Camera *cam, float dof, float dof_plane, int screenPos_x, i
 
     float x = (float) screenPos_x + randFloat(); // add small rand value to achieve "antialiasing"
     float y = (float) screenPos_y + randFloat();
+    vec3_copy(&cam->position, &result->origin);
     Vec3 cam_coor = {
         x / (float)cam->height,
         y / (float)cam->height,
@@ -276,10 +280,16 @@ int screen2CameraDir(Camera *cam, float dof, float dof_plane, int screenPos_x, i
     return 1;
 }
 
+int modulo(int x,int N){
+    return (x % N + N) %N;
+}
+
 /* Gets pixel from texture coordinate */
 Vec3 GetPixel(Vec2 *vc, Texture *tex){
-    int x = ((int) (vc->x*tex->width))%tex->width;
-    int y = (tex->height - (int) (vc->y*tex->height))%tex->height;
+    int x = ((int) (vc->x*tex->width));
+    x = modulo(x, tex->width);
+    int y = (tex->height - (int) (vc->y*tex->height));
+    y = modulo(y, tex->height);
     return tex->pixels[y*tex->width+x];
 }
 
