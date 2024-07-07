@@ -262,7 +262,6 @@ int screen2CameraDir(Camera *cam, float dof, float dof_plane, int screenPos_x, i
 
     float x = (float) screenPos_x + randFloat(); // add small rand value to achieve "antialiasing"
     float y = (float) screenPos_y + randFloat();
-    vec3_copy(&cam->position, &result->origin);
     Vec3 cam_coor = {
         x / (float)cam->height,
         y / (float)cam->height,

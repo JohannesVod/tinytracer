@@ -8,10 +8,10 @@
 #include "stb_image_write.h"
 
 const float FOCAL_LENGTH = 3.7f;
-const int WIDTH = 400;
-const int HEIGHT = 200;
+const int WIDTH = 1600;
+const int HEIGHT = 800;
 const float DOF = 0.05;
-const float FSTOP = 3.5;
+const float FSTOP = 4.7;
 const int SAMPLES = 30000;
 const int BOUNCES = 3;
 const int gridcells = 150; // 150 for motorbike please
