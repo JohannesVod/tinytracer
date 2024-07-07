@@ -76,20 +76,21 @@ Pcr 0.030000
 aniso 0.000000
 anisor 0.000000
 
-newmtl floor
-Kd 0.246400 0.345445 0.369933
+newmtl chinese_stool.001
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
-Ni 1.500000
+Ni 1.450000
 d 1.000000
 illum 2
-Pr 0.500000
 Pm 0.000000
 Ps 0.000000
 Pc 0.000000
 Pcr 0.030000
 aniso 0.000000
 anisor 0.000000
+map_Kd //wsl.localhost/Arch/home/NiceGuySaysHi/projects/blender/assets/chinese_stool_4k.blend/textures/chinese_stool_diff_4k.jpg
+map_Pr //wsl.localhost/Arch/home/NiceGuySaysHi/projects/blender/assets/chinese_stool_4k.blend/textures/chinese_stool_rough_4k.exr
+map_Bump -bm 1.000000 //wsl.localhost/Arch/home/NiceGuySaysHi/projects/blender/assets/chinese_stool_4k.blend/textures/chinese_stool_nor_gl_4k.exr
 
 newmtl light
 Kd 0.800000 0.800000 0.800000
