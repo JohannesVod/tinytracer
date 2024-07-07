@@ -1,5 +1,7 @@
 A tiny but powerful raytracer in pure C. It is not as fast as for example blender cycles, but only consists of ~1000 lines of code and is easy to understand (i hope). It can handle basic materials and textures.
 
+![example render](renders/motorbike.png)
+
 # Render your own scene
 
 To render your own scene, open the blender file in the scene folder. Change the materials and models, but make sure to do the following:
