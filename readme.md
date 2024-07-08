@@ -1,6 +1,6 @@
 A tiny but powerful raytracer in pure C. It is not as fast as for example blender cycles, but only consists of ~1300 lines of code and is easy to understand (i hope). It can handle basic materials and textures.
 
-![example render](renders/motorbike.png)
+![example render](renders/motorbikeSmooth.png)
 
 # Render your own scene
 
